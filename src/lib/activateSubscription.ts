@@ -49,9 +49,11 @@ async function sendMetaPurchaseEvent({
         },
         custom_data: customData,
       }],
+      // Token in the body, not the URL — URLs end up in proxy/access logs
+      access_token: accessToken,
     };
     const response = await fetch(
-      `https://graph.facebook.com/v23.0/${pixelId}/events?access_token=${accessToken}`,
+      `https://graph.facebook.com/v23.0/${pixelId}/events`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
     );
     const result = await response.json();
