@@ -11,9 +11,9 @@ import PosterBackdrop from './PosterBackdrop';
 // Ticket stamp per plan index (order from API: cheapest first)
 const UI_META: { badge: string | null }[] = [
   { badge: null },
+  { badge: null },
   { badge: 'Sabse popular' },
   { badge: 'Best value' },
-  { badge: 'Sabse sasta / din' },
 ];
 
 interface ApiPlan {
@@ -95,7 +95,9 @@ export default function SubscriptionsPage() {
             ...(UI_META[i] ?? UI_META[UI_META.length - 1]),
           }));
           setPlans(mapped);
-          setSelected(mapped[1]?.id ?? mapped[0]?.id ?? null);
+          // Default to the ₹299 plan
+          const def = mapped.find((p) => p.price === 299) ?? mapped[2] ?? mapped[0];
+          setSelected(def?.id ?? null);
         }
       })
       .finally(() => setLoading(false));

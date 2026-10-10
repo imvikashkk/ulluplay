@@ -32,10 +32,10 @@ CREATE TABLE IF NOT EXISTS plans (
 
 INSERT INTO plans (name, original_price, price, duration_days, description)
 SELECT v.* FROM (VALUES
-  ('1 Day',    299,  169, 1,   'Ek din ka full access'),
-  ('1 Month',  499,  249, 30,  'Poora mahine ka mazza'),
-  ('6 Months', 999,  399, 180, 'Chhe mahine ka full entertainment'),
-  ('1 Year',   1499, 599, 365, 'Poore saal ka unlimited mazza')
+  ('2 Days',   299,  149, 2,   'Do din ka full access'),
+  ('15 Days',  499,  199, 15,  'Aadhe mahine ka mazza'),
+  ('1 Month',  699,  299, 30,  'Poora mahine ka mazza'),
+  ('1 Year',   1499, 399, 365, 'Poore saal ka unlimited mazza')
 ) AS v(name, original_price, price, duration_days, description)
 WHERE NOT EXISTS (SELECT 1 FROM plans);
 

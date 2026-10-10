@@ -39,6 +39,7 @@ interface Stats {
   total_pending: string;
   total_failed: string;
   total_users: string;
+  total_revenue: string;
 }
 
 interface Client {
@@ -1441,6 +1442,7 @@ export default function AdminDashboard() {
   };
 
   const statCards = stats ? [
+    { label: 'Total Revenue',  value: `₹${Number(stats.total_revenue).toLocaleString('en-IN')}`, color: '#15803D', bg: '#F0FDF4', icon: 'M6 3h12M6 8h12M6 13l8.5 8M6 13h3c6.667 0 6.667-10 0-10' },
     { label: 'Total Users',    value: stats.total_users,      color: BLUE,      bg: BLUE_LT,   icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
     { label: 'Total Payments', value: stats.total_payments,   color: '#5A5148',  bg: '#FAF8F4', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     { label: 'Successful',     value: stats.total_successful, color: '#15803D',  bg: '#F0FDF4', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -1462,7 +1464,7 @@ export default function AdminDashboard() {
         {adminTab === 'payments' && (
           <>
             {stats && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 fu">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 fu">
                 {statCards.map((c) => (
                   <div key={c.label} className="rounded-[10px] px-4 py-3.5 flex items-center gap-3" style={{ background: c.bg, border: `1px solid ${c.color}22` }}>
                     <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: c.color + '18' }}>

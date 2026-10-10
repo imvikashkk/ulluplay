@@ -151,7 +151,8 @@ export async function GET(req: NextRequest) {
            COUNT(*) FILTER (WHERE p.status = 'success')     AS total_successful,
            COUNT(*) FILTER (WHERE p.status = 'pending')     AS total_pending,
            COUNT(*) FILTER (WHERE p.status = 'failed')      AS total_failed,
-           COUNT(DISTINCT p.user_id)                        AS total_users
+           COUNT(DISTINCT p.user_id)                        AS total_users,
+           COALESCE(SUM(p.amount) FILTER (WHERE p.status = 'success'), 0) AS total_revenue
          FROM payments p
          LEFT JOIN pixels px ON px.slug = p.campaign_slug
          LEFT JOIN clients c ON c.id = px.client_id
