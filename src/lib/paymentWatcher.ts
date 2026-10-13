@@ -1,15 +1,20 @@
 import type { NextRequest } from 'next/server';
 import pool from './db';
 import { activateSubscription } from './activateSubscription';
-import { getUpiOrderStatus } from './upiGateway';
+import { getSabpaisaOrderStatus } from './sabpaisa';
 
-const INTERVAL_MS = 5000;
+const INTERVAL_MS = 10000;
 // Gateway status queries in flight at once
 const CONCURRENCY = 10;
-// Orders older than this are no longer polled — UPI QR links expire well before it
+// Orders older than this are no longer polled — orders expire well before it
 const WINDOW = '1 hour';
-// Still pending this long after the QR expiry → give up and mark failed
+// Still pending this long after the order expiry → give up and mark failed
 const EXPIRY_GRACE_MS = 5 * 60 * 1000;
+// SabPaisa allows ~100 status checks per payment: fresh orders every 20s, older ones every 2 min
+const FRESH_MS = 10 * 60 * 1000;
+const FRESH_GAP_MS = 20 * 1000;
+const STALE_GAP_MS = 2 * 60 * 1000;
+const lastChecked = new Map<string, number>();
 
 export type SettleResult =
   | { state: 'paid'; freshToken: string }
@@ -17,12 +22,12 @@ export type SettleResult =
   | { state: 'pending' };
 
 // Shared by /api/payment/verify and the background watcher — the gateway status is the source of truth
-export async function settleUpiOrder(
+export async function settleOrder(
   txnId: string,
   expectedAmount: number,
   req: NextRequest | null,
 ): Promise<SettleResult> {
-  const check = await getUpiOrderStatus(txnId);
+  const check = await getSabpaisaOrderStatus(txnId);
   if (!check) return { state: 'pending' };
 
   if (check.failed) {
@@ -38,7 +43,7 @@ export async function settleUpiOrder(
 
   // Guard against a partial payment being marked as a full plan purchase
   if (check.amount !== null && check.amount + 0.001 < expectedAmount) {
-    console.error('UPI amount mismatch:', txnId, check.amount, expectedAmount);
+    console.error('Payment amount mismatch:', txnId, check.amount, expectedAmount);
     return { state: 'pending' };
   }
 
@@ -53,15 +58,23 @@ async function tick() {
      WHERE status = 'pending' AND created_at > NOW() - INTERVAL '${WINDOW}'`,
   );
 
-  // Check orders in parallel batches — one at a time, a backlog of abandoned QRs would delay a real payment
-  for (let i = 0; i < res.rows.length; i += CONCURRENCY) {
-    await Promise.all(res.rows.slice(i, i + CONCURRENCY).map(checkRow));
+  const now = Date.now();
+  for (const id of lastChecked.keys()) if (!res.rows.some((r) => r.txn_id === id)) lastChecked.delete(id);
+  const due = res.rows.filter((r) => {
+    const gap = now - new Date(r.created_at).getTime() < FRESH_MS ? FRESH_GAP_MS : STALE_GAP_MS;
+    return now - (lastChecked.get(r.txn_id) ?? 0) >= gap;
+  });
+  for (const r of due) lastChecked.set(r.txn_id, now);
+
+  // Check orders in parallel batches — one at a time, a backlog of abandoned checkouts would delay a real payment
+  for (let i = 0; i < due.length; i += CONCURRENCY) {
+    await Promise.all(due.slice(i, i + CONCURRENCY).map(checkRow));
   }
 }
 
 async function checkRow(row: { txn_id: string; amount: string; created_at: Date; expires_at: string | null }) {
   try {
-    const { state } = await settleUpiOrder(row.txn_id, Number(row.amount), null);
+    const { state } = await settleOrder(row.txn_id, Number(row.amount), null);
     if (state !== 'pending') {
       const secs = Math.round((Date.now() - new Date(row.created_at).getTime()) / 1000);
       console.log(`payment watcher: ${row.txn_id} → ${state} (${secs}s after order)`);

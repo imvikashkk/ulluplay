@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { activateSubscription } from '@/lib/activateSubscription';
-import { settleUpiOrder } from '@/lib/paymentWatcher';
+import { settleOrder } from '@/lib/paymentWatcher';
 import { verifyUserToken } from '@/lib/userAuth';
 
 function setCookies(res: NextResponse, token: string, maxAge: number, userId: string, mobile: string) {
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Payment failed' });
     }
 
-    const settled = await settleUpiOrder(txnId, Number(pay.amount), req);
+    const settled = await settleOrder(txnId, Number(pay.amount), req);
     if (settled.state === 'paid') return buildResponse(settled.freshToken);
     if (settled.state === 'failed') return NextResponse.json({ success: false, message: 'Payment failed' });
     return NextResponse.json({ success: false, message: 'Payment not completed yet' });

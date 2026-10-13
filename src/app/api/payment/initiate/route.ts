@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyUserToken } from '@/lib/userAuth';
-import { createUpiOrder } from '@/lib/upiGateway';
+import { createSabpaisaOrder } from '@/lib/sabpaisa';
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const order = await createUpiOrder(Number(plan.price), `Ullu Play ${plan.name} U${userId}`, {
+    const order = await createSabpaisaOrder(Number(plan.price), {
       userId: Number(userId),
       mobile: user.mobile ?? '',
     });
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Gateway order id doubles as our txn id — the status page and verify route key on it
+    // Our txn id doubles as SabPaisa's clientTxnId — the status page and verify route key on it
     const txnId = order.orderId;
 
     await pool.query(
@@ -90,12 +90,12 @@ export async function POST(req: NextRequest) {
         txnId,
         plan.price,
         campaignSlug || null,
-        order.gatewayOrderId || order.orderId,
+        order.paymentId || null,
         fbp,
         fbc,
         metaCampaignId,
         metaCampaignName,
-        JSON.stringify(order),
+        JSON.stringify({ expiresAt: order.expiresAt }),
         req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
         req.headers.get('user-agent') || null,
       ],
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { txnId, amount: plan.price },
+      data: { txnId, amount: plan.price, redirectUrl: order.redirectUrl },
     });
   } catch (err) {
     console.error('payment/initiate error:', err);

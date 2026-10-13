@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SupportButton from './SupportButton';
-import UpiPaySheet from './UpiPaySheet';
 import { HeaderAction, IconBack, SiteHeader } from './SiteChrome';
 import { INK, LINE, PANEL, RED, YELLOW } from '@/lib/brand';
 import PosterBackdrop from './PosterBackdrop';
@@ -44,7 +43,6 @@ export default function SubscriptionsPage() {
   const [paying, setPaying] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState('');
-  const [payTxnId, setPayTxnId] = useState<string | null>(null);
   const router = useRouter();
   const sel = plans.find((p) => p.id === selected) ?? null;
 
@@ -70,7 +68,7 @@ export default function SubscriptionsPage() {
           return;
         }
         const data = await r.json();
-        // Subscription got activated in the background (e.g. pay sheet closed before confirmation);
+        // Subscription got activated in the background (e.g. checkout left before confirmation);
         // the response just refreshed the cookies, so go home
         if (data.success && data.subActivated) {
           localStorage.removeItem('mr_campaign');
@@ -146,7 +144,8 @@ export default function SubscriptionsPage() {
       }
       const data = await res.json();
       if (data.success) {
-        setPayTxnId(data.data.txnId);
+        // Hand off to SabPaisa's hosted checkout — it returns the browser to /api/payment/callback
+        window.location.href = data.data.redirectUrl;
       } else {
         setError(data.message ?? 'Payment failed. Try again.');
         setPaying(false);
@@ -287,7 +286,7 @@ export default function SubscriptionsPage() {
 
         {/* Trust */}
         <ul className="m-0 mt-6 p-0 list-none grid grid-cols-3 gap-2 text-center">
-          {['UPI se secure payment', 'Turant access', 'Koi auto-debit nahi'].map((t) => (
+          {['Secure payment', 'Turant access', 'Koi auto-debit nahi'].map((t) => (
             <li key={t} className="text-[11px] text-white/45 px-2 py-2 rounded-md" style={{ border: `1px solid ${LINE}` }}>
               {t}
             </li>
@@ -330,16 +329,6 @@ export default function SubscriptionsPage() {
           </div>
         </div>
       </div>
-
-      {payTxnId && (
-        <UpiPaySheet
-          txnId={payTxnId}
-          onClose={() => {
-            setPayTxnId(null);
-            setPaying(false);
-          }}
-        />
-      )}
     </main>
   );
 }
