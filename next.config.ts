@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['next-dev.vikashkk.com'],
+  // Dev only — lets phones/laptops on the LAN load HMR when opening the site by IP
+  allowedDevOrigins: ['next-dev.vikashkk.com', 'localhost', '127.0.0.1', '192.168.1.4', '192.168.*.*'],
   images: {
     remotePatterns: [
       {

@@ -7,13 +7,16 @@ import { INK, LINE, PANEL, RED, YELLOW } from '@/lib/brand';
 // SabPaisa caps status checks per payment, and the watcher polls too — keep this light
 const POLL_MS = 4000;
 // SabPaisa can confirm a little after redirecting back — keep checking this long before showing a pending note
-const MAX_WAIT_MS = 2 * 60 * 1000;
+const MAX_WAIT_MS = 45 * 1000;
+// Returned by SabPaisa when the user cancelled or the payment failed on its page
+const FAILED_STATUSES = ['FAILED', 'EXPIRED', 'TIMEOUT', 'CANCELLED'];
 
 // Landing page after SabPaisa checkout. Polls /api/payment/verify until the order settles;
 // leaving it is safe — the backend watcher still activates a payment confirmed later.
 export default function PaymentStatusPage() {
   const params = useSearchParams();
   const txnId = params.get('txnId') ?? params.get('clientTxnId') ?? params.get('order_id') ?? '';
+  const returnedFailed = FAILED_STATUSES.includes((params.get('status') ?? '').toUpperCase());
   const [state, setState] = useState<'waiting' | 'success' | 'failed' | 'pending'>('waiting');
   const [msg, setMsg] = useState('');
   const doneRef = useRef(false);
@@ -48,17 +51,22 @@ export default function PaymentStatusPage() {
         setTimeout(() => {
           window.location.href = '/';
         }, 1800);
-      } else if (data.message !== 'Payment not completed yet') {
+      } else if (data.message !== 'Payment not completed yet' || returnedFailed) {
         doneRef.current = true;
         setState('failed');
         setMsg('Payment failed ya cancel ho gaya.');
       }
     } catch {
+      if (returnedFailed) {
+        doneRef.current = true;
+        setState('failed');
+        setMsg('Payment failed ya cancel ho gaya.');
+      }
       // Transient network error — keep polling
     } finally {
       busyRef.current = false;
     }
-  }, [txnId]);
+  }, [txnId, returnedFailed]);
 
   useEffect(() => {
     if (!txnId) {

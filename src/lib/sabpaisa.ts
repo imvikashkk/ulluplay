@@ -71,7 +71,7 @@ export async function createSabpaisaOrder(
       amount: paise,
       currency: 'INR',
       // Users only sign up with a mobile number — derive name/email
-      customerName: 'Ullu Play User',
+      customerName: 'User',
       customerEmail: `${mobile || customer.userId}@kaama.online`,
       customerPhone: mobile,
       returnUrl: `${appUrl}/api/payment/callback`,
@@ -110,7 +110,7 @@ export async function getSabpaisaOrderStatus(txnid: string): Promise<SabpaisaOrd
     const paise = Number(data.amountPaise);
     return {
       paid: status === 'SUCCESS',
-      failed: ['FAILED', 'EXPIRED', 'TIMEOUT', 'CANCELLED'].includes(status),
+      failed: FAILED_STATUSES.includes(status),
       status,
       gatewayTxnId: data.txnId ?? data.bankRrn ?? null,
       amount: Number.isFinite(paid) && paid > 0 ? paid : Number.isFinite(paise) && paise > 0 ? paise / 100 : null,
@@ -120,4 +120,21 @@ export async function getSabpaisaOrderStatus(txnid: string): Promise<SabpaisaOrd
     console.error('SabPaisa status error:', err);
     return null;
   }
+}
+
+// Statuses that end a payment without money moving
+export const FAILED_STATUSES = ['FAILED', 'EXPIRED', 'TIMEOUT', 'CANCELLED'];
+
+// returnUrl signature: HMAC-SHA256(secret, every other param sorted by key as `key=value` joined by `|`), hex
+export function verifyReturnSignature(params: URLSearchParams): boolean {
+  const signature = params.get('signature');
+  const { secretKey } = cfg();
+  if (!signature || !secretKey) return false;
+  const data = [...params.entries()]
+    .filter(([k]) => k !== 'signature')
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('|');
+  const expected = crypto.createHmac('sha256', secretKey).update(data).digest('hex');
+  return expected.length === signature.length && crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature.toLowerCase()));
 }
