@@ -36,7 +36,7 @@ async function post(path: string, body: object) {
   const c = cfg();
   const res = await fetch(`${c.baseUrl}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Api-Key': c.apiKey },
+    headers: { 'Content-Type': 'application/json', 'X-Api-Key': c.apiKey, 'X-Merchant-Id': c.clientCode },
     body: JSON.stringify(body),
     cache: 'no-store',
   });
@@ -91,7 +91,8 @@ export async function createSabpaisaOrder(
       paymentId: String(data.paymentId ?? ''),
       amount,
       redirectUrl: redirect.toString(),
-      expiresAt: data.expiresAt ?? new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      // SabPaisa's expiresAt is local IST time without a zone — use our own UTC expiry (sessions last 30 min)
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     };
   } catch (err) {
     console.error('SabPaisa create error:', err);
@@ -104,7 +105,11 @@ export async function getSabpaisaOrderStatus(txnid: string): Promise<SabpaisaOrd
   const c = cfg();
   try {
     const { ok, data } = await post('/api/v2/payments/enquiry', { clientCode: c.clientCode, merchantTxnId: txnid });
-    if (!ok || !data?.success || !data.status) return null;
+    // The enquiry response has no `success` flag — just the transaction fields
+    if (!ok || !data?.status || (data.merchantTxnId && data.merchantTxnId !== txnid)) {
+      if (!ok) console.error('SabPaisa status failed:', data?.errorCode ?? '', data?.errorMessage ?? '');
+      return null;
+    }
     const status = String(data.status).toUpperCase();
     const paid = parseFloat(data.paidAmount);
     const paise = Number(data.amountPaise);

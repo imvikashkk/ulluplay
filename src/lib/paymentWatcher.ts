@@ -21,7 +21,7 @@ export type SettleResult =
   | { state: 'failed' }
   | { state: 'pending' };
 
-// Shared by /api/payment/verify and the background watcher — the gateway status is the source of truth
+// Shared by verify, callback and the background watcher — the gateway status is the source of truth
 export async function settleOrder(
   txnId: string,
   expectedAmount: number,
