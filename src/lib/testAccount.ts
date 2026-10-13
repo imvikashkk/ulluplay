@@ -2,7 +2,7 @@ import pool from './db';
 
 // Fixed test/review login — no SMS sent, OTP is always TEST_OTP, subscription never lapses
 export const TEST_MOBILE = '9754159491';
-export const TEST_OTP = '123456';
+export const TEST_OTP = '751234';
 
 export const isTestMobile = (mobile: string) => mobile === TEST_MOBILE;
 

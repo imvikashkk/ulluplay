@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyUserToken } from '@/lib/userAuth';
 import { createSabpaisaOrder } from '@/lib/sabpaisa';
+import { createPaytmOrder } from '@/lib/paytm';
+import { activeGateway } from '@/lib/paymentGateway';
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,10 +68,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const order = await createSabpaisaOrder(Number(plan.price), {
-      userId: Number(userId),
-      mobile: user.mobile ?? '',
-    });
+    const gateway = activeGateway();
+    const customer = { userId: Number(userId), mobile: user.mobile ?? '' };
+    const order =
+      gateway === 'paytm'
+        ? await createPaytmOrder(Number(plan.price), `${plan.name} plan U${userId}`, customer)
+        : await createSabpaisaOrder(Number(plan.price), customer);
 
     if ('error' in order) {
       return NextResponse.json(
@@ -78,7 +82,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Our txn id doubles as SabPaisa's clientTxnId — the status page and verify route key on it
+    // Our txn id doubles as the gateway's order id (SabPaisa clientTxnId / Paytm `tr`) — the status page,
+    // pay sheet and verify route key on it
     const txnId = order.orderId;
 
     await pool.query(
@@ -90,20 +95,23 @@ export async function POST(req: NextRequest) {
         txnId,
         plan.price,
         campaignSlug || null,
-        order.paymentId || null,
+        'paymentId' in order ? order.paymentId || null : null,
         fbp,
         fbc,
         metaCampaignId,
         metaCampaignName,
-        JSON.stringify({ expiresAt: order.expiresAt }),
+        // gateway is how the watcher/verify know where to check this order, even after PAYMENT_GATEWAY changes.
+        // Paytm keeps its whole order (UPI link + QR) — /api/payment/order serves it to the pay sheet.
+        JSON.stringify(gateway === 'paytm' ? { ...order, gateway } : { expiresAt: order.expiresAt, gateway }),
         req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
         req.headers.get('user-agent') || null,
       ],
     );
 
+    // SabPaisa → the browser is redirected to its checkout; Paytm → the subscription page opens the UPI pay sheet
     return NextResponse.json({
       success: true,
-      data: { txnId, amount: plan.price, redirectUrl: order.redirectUrl },
+      data: { txnId, amount: plan.price, gateway, redirectUrl: 'redirectUrl' in order ? order.redirectUrl : null },
     });
   } catch (err) {
     console.error('payment/initiate error:', err);

@@ -15,7 +15,7 @@ const eslintConfig = defineConfig([
     rules: {
       // React Compiler false-positives on standard async data-fetch patterns
       // (fetch functions called from useEffect). Downgrade to warn.
-      'react-compiler/react-compiler': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
 ]);

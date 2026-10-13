@@ -69,8 +69,9 @@ export default function CampaignTracker() {
       .then(({ pixelId }: { pixelId: string | null }) => {
         if (!pixelId) return;
         // Only init once per session — fbq queues events until init, so re-init causes duplicate sends
-        if ((window as any).__mr_pixel_inited === pixelId) return;
-        (window as any).__mr_pixel_inited = pixelId;
+        const w = window as Window & { __mr_pixel_inited?: string };
+        if (w.__mr_pixel_inited === pixelId) return;
+        w.__mr_pixel_inited = pixelId;
         window.fbq('init', pixelId);
         window.fbq('track', 'PageView');
       })
