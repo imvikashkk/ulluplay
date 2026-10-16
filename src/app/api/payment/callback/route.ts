@@ -30,7 +30,7 @@ async function handle(req: NextRequest, params: URLSearchParams) {
       );
       console.log(`payment callback: ${txnId} → ${returned.toLowerCase()} on checkout`);
     } else if (pay.status !== 'success') {
-      const { state } = await settleOrder(pay.txn_id, Number(pay.amount), null, 'sabpaisa');
+      const { state } = await settleOrder(pay.txn_id, Number(pay.amount), null);
       console.log(`payment callback: ${pay.txn_id} (${params.get('status') ?? ''}) → ${state}`);
     }
   } catch (err) {

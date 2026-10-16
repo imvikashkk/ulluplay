@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
+import { isTestEnv } from './appEnv';
 
-const SECRET = process.env.ADMIN_TOKEN_SECRET ?? 'admin-dev-secret-change-in-prod';
+const SECRET = process.env.ADMIN_TOKEN_SECRET || (isTestEnv ? 'admin-dev-secret-change-in-prod' : '');
 const EXPIRY_SECS = 60 * 60 * 8; // 8 hours
 
 function b64url(buf: Buffer): string {

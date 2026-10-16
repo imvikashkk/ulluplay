@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
+import { isTestEnv } from './appEnv';
 
-const SECRET = process.env.USER_TOKEN_SECRET ?? 'user-dev-secret-change-in-prod';
+const SECRET = process.env.USER_TOKEN_SECRET || (isTestEnv ? 'user-dev-secret-change-in-prod' : '');
 
 export function generateUserToken(userId: number, secsValid: number): string {
   const exp  = Math.floor(Date.now() / 1000) + secsValid;

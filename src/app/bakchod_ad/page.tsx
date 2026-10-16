@@ -14,7 +14,7 @@ async function adminLogout() {
 }
 
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
-type AdminTab = 'payments' | 'subscriptions' | 'marketing' | 'mediaBuyers';
+type AdminTab = 'payments' | 'subscriptions' | 'marketing' | 'mediaBuyers' | 'landing';
 type MarketingTab = 'overview' | 'campaigns';
 
 /* ── Types ─────────────────────────────────────────────── */
@@ -1370,11 +1370,203 @@ function MarketingPanel() {
   );
 }
 
+/* ── Landing A/B Panel ─────────────────────────────────── */
+type LpVariant = 'a' | 'b';
+interface LandingConfig { enabled: boolean; splitB: number; run: number; fallback: LpVariant; startedAt: string | null }
+interface LandingStat { variant: LpVariant; visitors: number; leads: number; buyers: number; orders: number; revenue: number }
+
+const pct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : '—');
+
+// Normal CDF (Abramowitz–Stegun) for the two-proportion z-test below
+function normCdf(z: number) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp((-z * z) / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return z > 0 ? 1 - p : p;
+}
+
+// How sure we are the leader really converts better (buyers / visitors), not just luck
+function confidence(a: LandingStat, b: LandingStat) {
+  if (a.visitors === 0 || b.visitors === 0) return null;
+  const pa = a.buyers / a.visitors, pb = b.buyers / b.visitors;
+  const pool = (a.buyers + b.buyers) / (a.visitors + b.visitors);
+  const se = Math.sqrt(pool * (1 - pool) * (1 / a.visitors + 1 / b.visitors));
+  if (se === 0) return null;
+  return { leader: (pb > pa ? 'b' : 'a') as LpVariant, conf: 2 * normCdf(Math.abs(pb - pa) / se) - 1 };
+}
+
+function LandingAbPanel() {
+  const [config, setConfig] = useState<LandingConfig | null>(null);
+  const [stats, setStats]   = useState<LandingStat[]>([]);
+  const [split, setSplit]   = useState(50);
+  const [saving, setSaving] = useState(false);
+  const [restartConfirm, setRestartConfirm] = useState(false);
+  const [flash, setFlash]   = useState('');
+
+  const apply = (json: { success: boolean; config: LandingConfig; stats: LandingStat[]; message?: string }) => {
+    if (!json.success) { alert(json.message ?? 'Save failed'); return; }
+    setConfig(json.config); setStats(json.stats); setSplit(json.config.splitB);
+  };
+
+  const load = useCallback(async () => {
+    const res = await fetch('/api/admin/landing');
+    if (res.status === 401) { adminLogout(); return; }
+    apply(await res.json());
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function save(body: object, msg: string) {
+    setSaving(true); setFlash('');
+    const res = await fetch('/api/admin/landing', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.status === 401) { adminLogout(); return; }
+    const json = await res.json();
+    apply(json);
+    if (json.success) setFlash(msg);
+    setSaving(false);
+  }
+
+  if (!config) return <div className="fu py-16 text-center text-[12px] text-stone-400">Loading…</div>;
+
+  const [a, b] = [stats.find((s) => s.variant === 'a'), stats.find((s) => s.variant === 'b')];
+  const sig = a && b ? confidence(a, b) : null;
+  const card = { background: '#FFFFFF', border: '1px solid #E6E0D6', boxShadow: '0 1px 4px rgba(0,0,0,.05)' };
+  const rows: { label: string; get: (s: LandingStat) => string; hint?: string }[] = [
+    { label: 'Visitors',        get: (s) => String(s.visitors) },
+    { label: 'Leads',           get: (s) => String(s.leads), hint: 'Mobile number daala' },
+    { label: 'Buyers',          get: (s) => String(s.buyers), hint: 'Lead ke baad payment success' },
+    { label: 'Revenue',         get: (s) => `₹${s.revenue.toLocaleString('en-IN')}` },
+    { label: 'Lead rate',       get: (s) => pct(s.leads, s.visitors), hint: 'Leads ÷ Visitors' },
+    { label: 'Conversion',      get: (s) => pct(s.buyers, s.visitors), hint: 'Buyers ÷ Visitors' },
+    { label: 'Revenue / visitor', get: (s) => (s.visitors ? `₹${(s.revenue / s.visitors).toFixed(2)}` : '—') },
+  ];
+
+  return (
+    <div className="fu grid gap-4">
+      {flash && (
+        <div className="rounded-[10px] px-4 py-2.5 text-[12px] font-semibold" style={{ background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0' }}>
+          {flash}
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="rounded-[10px] p-5 grid gap-5" style={card}>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-[13px] font-bold text-stone-800">A/B test {config.enabled ? 'chal raha hai' : 'band hai'}</p>
+            <p className="text-[11px] text-stone-500 mt-0.5">
+              Run #{config.run}{config.startedAt ? ` · shuru ${new Date(config.startedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}` : ''}
+            </p>
+          </div>
+          <button role="switch" aria-checked={config.enabled} disabled={saving}
+            onClick={() => save({ enabled: !config.enabled }, config.enabled ? `Test band. Ab sabko Variant ${config.fallback.toUpperCase()} dikhega.` : 'Test shuru. Naye visitors split ke hisaab se A ya B dekhenge.')}
+            className="relative h-7 w-12 rounded-full transition-colors disabled:opacity-50"
+            style={{ background: config.enabled ? '#15803D' : '#D6CFC4' }}>
+            <span className="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all" style={{ left: config.enabled ? 26 : 4 }} />
+          </button>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wide text-stone-500 mb-2">
+            <span>A · {100 - split}%</span><span>Traffic split</span><span>B · {split}%</span>
+          </div>
+          <input type="range" min={0} max={100} step={5} value={split} onChange={(e) => setSplit(Number(e.target.value))}
+            className="w-full accent-stone-800" aria-label="Variant B ka traffic %" />
+          {split !== config.splitB && (
+            <button disabled={saving} onClick={() => save({ splitB: split }, `Split save: A ${100 - split}% · B ${split}%. Sirf naye visitors par lagega.`)}
+              className="mt-2 px-3.5 py-2 rounded-[10px] text-[12px] font-bold text-white disabled:opacity-40" style={{ background: BLUE }}>
+              Split save karo
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="text-[12px] font-semibold text-stone-600">Test band hone par sabko dikhao:</label>
+          <select value={config.fallback} disabled={saving}
+            onChange={(e) => save({ fallback: e.target.value }, `Test band hone par Variant ${e.target.value.toUpperCase()} dikhega.`)}
+            className="px-3 py-1.5 rounded-[8px] text-[12px] font-semibold outline-none"
+            style={{ background: BLUE_LT, border: `1.5px solid ${BLUE}`, color: BLUE }}>
+            <option value="a">Variant A (original)</option>
+            <option value="b">Variant B (benefits page)</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap pt-1" style={{ borderTop: '1px solid #F1EDE6' }}>
+          <span className="text-[12px] font-semibold text-stone-600 mt-3">Preview (count nahi hota):</span>
+          {(['a', 'b'] as LpVariant[]).map((v) => (
+            <a key={v} href={`/auth?lp=${v}`} target="_blank" rel="noreferrer"
+              className="mt-3 px-3 py-1.5 rounded-[8px] text-[11px] font-bold uppercase tracking-wide"
+              style={{ background: '#FFFFFF', border: '1.5px solid #E6E0D6', color: BLUE }}>
+              Variant {v.toUpperCase()} ↗
+            </a>
+          ))}
+          <div className="ml-auto mt-3">
+            {restartConfirm ? (
+              <span className="flex items-center gap-2">
+                <span className="text-[11px] text-stone-500">Naya run, stats 0 se?</span>
+                <button disabled={saving} onClick={() => { setRestartConfirm(false); save({ action: 'restart' }, 'Naya run shuru. Purane run ka data DB mein safe hai.'); }}
+                  className="px-3 py-1.5 rounded-[8px] text-[11px] font-bold text-white" style={{ background: '#B91C1C' }}>Haan, restart</button>
+                <button onClick={() => setRestartConfirm(false)} className="px-3 py-1.5 rounded-[8px] text-[11px] font-bold text-stone-500">Cancel</button>
+              </span>
+            ) : (
+              <button onClick={() => setRestartConfirm(true)} className="px-3 py-1.5 rounded-[8px] text-[11px] font-bold"
+                style={{ border: '1.5px solid #FECACA', color: '#B91C1C', background: '#FEF2F2' }}>
+                Restart test
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Results */}
+      <div className="rounded-[10px] overflow-hidden" style={card}>
+        <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid #F1EDE6', background: '#FAF8F4' }}>
+          <p className="text-[12px] font-bold text-stone-700">Results · Run #{config.run}</p>
+          <button onClick={load} className="text-[11px] font-bold text-stone-500 hover:text-stone-800">↻ Refresh</button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-[.12em] text-stone-400">
+                <th className="text-left font-bold px-5 py-2.5">Metric</th>
+                <th className="text-right font-bold px-5 py-2.5">A · Original</th>
+                <th className="text-right font-bold px-5 py-2.5">B · Benefits</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.label} style={{ borderTop: '1px solid #F1EDE6' }}>
+                  <td className="px-5 py-2.5">
+                    <span className="font-semibold text-stone-700">{r.label}</span>
+                    {r.hint && <span className="block text-[10px] text-stone-400">{r.hint}</span>}
+                  </td>
+                  <td className="px-5 py-2.5 text-right font-bold text-stone-800 tabular-nums">{a ? r.get(a) : '—'}</td>
+                  <td className="px-5 py-2.5 text-right font-bold text-stone-800 tabular-nums">{b ? r.get(b) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-5 py-3.5 text-[12px]" style={{ borderTop: '1px solid #F1EDE6', background: '#FAF8F4' }}>
+          {!sig || (a && b && a.buyers + b.buyers < 20) ? (
+            <span className="text-stone-500">Abhi data kam hai. Dono variants mein kam se kam 20–30 buyers aane do, phir winner decide karo.</span>
+          ) : sig.conf >= 0.95 ? (
+            <span className="font-bold text-green-700">Variant {sig.leader.toUpperCase()} jeet raha hai ({(sig.conf * 100).toFixed(0)}% confidence). Ise &quot;Test band hone par&quot; mein select karke test band kar sakte ho.</span>
+          ) : (
+            <span className="text-amber-700 font-semibold">Variant {sig.leader.toUpperCase()} aage hai, par sirf {(sig.conf * 100).toFixed(0)}% confidence. 95% tak test chalne do.</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ADMIN_NAV: { key: AdminTab; label: string; icon: string }[] = [
             { key: 'payments',    label: 'Payments',    icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
             { key: 'subscriptions', label: 'Subscriptions', icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
             { key: 'marketing',   label: 'Marketing',   icon: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' },
             { key: 'mediaBuyers', label: 'Media Buyers', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
+            { key: 'landing',     label: 'Landing A/B', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2' },
 ];
 
 const ADMIN_TITLES: Record<AdminTab, [string, string]> = {
@@ -1382,6 +1574,7 @@ const ADMIN_TITLES: Record<AdminTab, [string, string]> = {
   subscriptions: ['Subscriptions', 'Kiske paas access hai, kab tak — aur kisi ko bhi free access do.'],
   marketing:     ['Marketing', 'Pixels, attribution aur conversion analytics.'],
   mediaBuyers:   ['Media Buyers', 'Media buyers jo pixels aur campaigns chalate hain.'],
+  landing:       ['Landing A/B', 'Do landing designs, traffic split aur kaunsa zyada convert karta hai.'],
 };
 
 /* ── Main Admin Dashboard ───────────────────────────────── */
@@ -1726,6 +1919,11 @@ export default function AdminDashboard() {
         {/* ── MEDIABUYER TAB ── */}
         {adminTab === 'mediaBuyers' && (
           <MediaBuyersPanel />
+        )}
+
+        {/* ── LANDING A/B TAB ── */}
+        {adminTab === 'landing' && (
+          <LandingAbPanel />
         )}
     </PanelShell>
   );

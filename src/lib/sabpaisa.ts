@@ -1,6 +1,7 @@
 // Server-only client for the SabPaisa PG 3.0 merchant API — keys come from env and are never exposed to the browser
 // Docs: https://devdocs.sabpaisa.in/api-reference
 import crypto from 'crypto';
+import { isTestEnv } from './appEnv';
 
 const BASE_URLS = {
   staging: 'https://staging-sb-merchant-api.sabpaisa.in',
@@ -8,7 +9,7 @@ const BASE_URLS = {
 };
 
 const cfg = () => ({
-  baseUrl: process.env.SABPAISA_ENV === 'staging' ? BASE_URLS.staging : BASE_URLS.production,
+  baseUrl: isTestEnv ? BASE_URLS.staging : BASE_URLS.production,
   clientCode: process.env.SABPAISA_CLIENT_CODE ?? '',
   apiKey: process.env.SABPAISA_API_KEY ?? '',
   secretKey: process.env.SABPAISA_SECRET_KEY ?? '',
@@ -54,8 +55,8 @@ export async function createSabpaisaOrder(
     return { error: 'Payment init failed' };
   }
 
-  // Doubles as our txn_id — alphanumeric only, unique per attempt
-  const txnid = `KS${customer.userId}T${Date.now()}${crypto.randomInt(100, 999)}`;
+  // Doubles as our txn_id — alphanumeric only, unique per attempt; KT = test, KS = live
+  const txnid = `${isTestEnv ? 'KT' : 'KS'}${customer.userId}T${Date.now()}${crypto.randomInt(100, 999)}`;
   const mobile = customer.mobile.replace(/\D/g, '').slice(-10);
   const paise = Math.round(amount * 100);
   const timestamp = Math.floor(Date.now() / 1000);

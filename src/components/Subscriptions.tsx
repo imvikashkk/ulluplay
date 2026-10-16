@@ -6,7 +6,6 @@ import SupportButton from './SupportButton';
 import { HeaderAction, IconBack, SiteHeader } from './SiteChrome';
 import { INK, LINE, PANEL, RED, YELLOW } from '@/lib/brand';
 import PosterBackdrop from './PosterBackdrop';
-import UpiPaySheet from './UpiPaySheet';
 
 // Ticket stamp per plan index (order from API: cheapest first)
 const UI_META: { badge: string | null }[] = [
@@ -44,10 +43,6 @@ export default function SubscriptionsPage() {
   const [paying, setPaying] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState('');
-  // Paytm UPI order being paid in the in-page sheet (SabPaisa redirects instead)
-  const [payTxnId, setPayTxnId] = useState<string | null>(null);
-  // Active gateway from /api/plans (PAYMENT_GATEWAY in .env) — only decides which payment hints to show
-  const [gateway, setGateway] = useState<'sabpaisa' | 'paytm'>('sabpaisa');
   const router = useRouter();
   const sel = plans.find((p) => p.id === selected) ?? null;
 
@@ -98,7 +93,6 @@ export default function SubscriptionsPage() {
             ...(UI_META[i] ?? UI_META[UI_META.length - 1]),
           }));
           setPlans(mapped);
-          if (data.gateway === 'paytm') setGateway('paytm');
           // Default to the ₹299 plan
           const def = mapped.find((p) => p.price === 299) ?? mapped[2] ?? mapped[0];
           setSelected(def?.id ?? null);
@@ -150,13 +144,8 @@ export default function SubscriptionsPage() {
       }
       const data = await res.json();
       if (data.success) {
-        if (data.data.redirectUrl) {
-          // SabPaisa: hand off to its hosted checkout — it returns the browser to /api/payment/callback
-          window.location.href = data.data.redirectUrl;
-        } else {
-          // Paytm: UPI intent buttons + QR in the in-page sheet
-          setPayTxnId(data.data.txnId);
-        }
+        // Hand off to SabPaisa's hosted checkout — it returns the browser to /api/payment/callback
+        window.location.href = data.data.redirectUrl;
       } else {
         setError(data.message ?? 'Payment failed. Try again.');
         setPaying(false);
@@ -303,22 +292,6 @@ export default function SubscriptionsPage() {
             </li>
           ))}
         </ul>
-
-        {/* Paytm UPI intent only works in these two apps — GPay blocks unsigned merchant links */}
-        {gateway === 'paytm' && (
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2">
-              {[
-                { name: 'PhonePe', icon: '/upi/phonepe.png' },
-                { name: 'Paytm', icon: '/upi/paytm.png' },
-              ].map((app) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={app.name} src={app.icon} alt={app.name} title={app.name} className="w-8 h-8 rounded-md bg-white object-contain p-0.5" />
-              ))}
-            </div>
-            <p className="m-0 text-[11px] text-white/55">Payments supported via PhonePe and Paytm only</p>
-          </div>
-        )}
       </div>
 
       {/* Sticky CTA */}
@@ -357,15 +330,6 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
-      {payTxnId && (
-        <UpiPaySheet
-          txnId={payTxnId}
-          onClose={() => {
-            setPayTxnId(null);
-            setPaying(false);
-          }}
-        />
-      )}
     </main>
   );
 }

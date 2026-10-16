@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import PosterBackdrop from './PosterBackdrop';
 import { Logo } from './SiteChrome';
@@ -72,47 +70,54 @@ function Marquee({ items, reverse = false }: { items: Line[]; reverse?: boolean 
   );
 }
 
+// Fonts + animations shared by every /auth layout (ka-btn, ka-shake, ka-hot…)
+export function AuthStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Mukta:wght@400;600;700;800&display=swap');
+      @keyframes kaRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes kaShine { to { background-position: 200% center; } }
+      @keyframes kaScroll { to { transform: translateX(-50%); } }
+      @keyframes kaGlow { 0%,100% { box-shadow: 0 10px 30px -10px ${RED}cc; } 50% { box-shadow: 0 10px 40px -6px ${YELLOW}aa; } }
+      .ka-rise { animation: kaRise .7s cubic-bezier(.22,1,.36,1) both; }
+      .ka-marquee { animation: kaScroll 28s linear infinite; }
+      .ka-marquee-rev { animation: kaScroll 28s linear infinite reverse; }
+      .ka-hot {
+        background: linear-gradient(90deg, #ff4d6d, ${YELLOW}, #ff9a3c, #ff4d6d);
+        background-size: 200% auto;
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: kaShine 2.5s linear infinite;
+        font-weight: 800;
+      }
+      /* Soft pulsing glow behind the wordmark */
+      @keyframes kaLogoGlow {
+        0%,100% { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 10px ${RED}88); }
+        50%     { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 22px ${RED}); }
+      }
+      .ka-logo { animation: kaLogoGlow 2.4s ease-in-out infinite; }
+      .ka-btn {
+        background: linear-gradient(90deg, #d90429, ${RED}, #ff7a18, ${YELLOW}, #ff7a18, ${RED}, #d90429);
+        background-size: 300% auto;
+        animation: kaShine 4s linear infinite, kaGlow 2.4s ease-in-out infinite;
+      }
+      .ka-btn:disabled { animation: none; }
+      @keyframes kaShake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
+      .ka-shake { animation: kaShake .4s ease-in-out; }
+      @keyframes kaNudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+      .ka-nudge { animation: kaNudge 1s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) {
+        .ka-hot, .ka-btn, .ka-marquee, .ka-marquee-rev, .ka-logo, .ka-nudge { animation: none; }
+      }
+    `}</style>
+  );
+}
+
 // Shared frame for /auth and /auth/otp: full-screen background image, scrolling hot-line strips top and bottom, centered glass card
 export default function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-[100dvh] text-white overflow-x-hidden" style={{ background: INK, fontFamily: FONT }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Mukta:wght@400;600;700;800&display=swap');
-        @keyframes kaRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes kaShine { to { background-position: 200% center; } }
-        @keyframes kaScroll { to { transform: translateX(-50%); } }
-        @keyframes kaGlow { 0%,100% { box-shadow: 0 10px 30px -10px ${RED}cc; } 50% { box-shadow: 0 10px 40px -6px ${YELLOW}aa; } }
-        .ka-rise { animation: kaRise .7s cubic-bezier(.22,1,.36,1) both; }
-        .ka-marquee { animation: kaScroll 28s linear infinite; }
-        .ka-marquee-rev { animation: kaScroll 28s linear infinite reverse; }
-        .ka-hot {
-          background: linear-gradient(90deg, #ff4d6d, ${YELLOW}, #ff9a3c, #ff4d6d);
-          background-size: 200% auto;
-          -webkit-background-clip: text; background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: kaShine 2.5s linear infinite;
-          font-weight: 800;
-        }
-        /* Soft pulsing glow behind the wordmark */
-        @keyframes kaLogoGlow {
-          0%,100% { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 10px ${RED}88); }
-          50%     { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 22px ${RED}); }
-        }
-        .ka-logo { animation: kaLogoGlow 2.4s ease-in-out infinite; }
-        .ka-btn {
-          background: linear-gradient(90deg, #d90429, ${RED}, #ff7a18, ${YELLOW}, #ff7a18, ${RED}, #d90429);
-          background-size: 300% auto;
-          animation: kaShine 4s linear infinite, kaGlow 2.4s ease-in-out infinite;
-        }
-        .ka-btn:disabled { animation: none; }
-        @keyframes kaShake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
-        .ka-shake { animation: kaShake .4s ease-in-out; }
-        @keyframes kaNudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
-        .ka-nudge { animation: kaNudge 1s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .ka-hot, .ka-btn, .ka-marquee, .ka-marquee-rev, .ka-logo, .ka-nudge { animation: none; }
-        }
-      `}</style>
+      <AuthStyles />
 
       <PosterBackdrop />
 

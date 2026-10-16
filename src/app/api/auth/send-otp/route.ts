@@ -3,6 +3,7 @@ import pool from '@/lib/db';
 import { generateUserToken } from '@/lib/userAuth';
 import { sendOtp } from '@/lib/meraOtp';
 import { isTestMobile, ensureTestSubscription } from '@/lib/testAccount';
+import { LP_COOKIE, parseLpCookie } from '@/lib/landingAb';
 
 export async function POST(req: NextRequest) {
   try {
@@ -121,6 +122,17 @@ export async function POST(req: NextRequest) {
       [mobile],
     );
     const userId: number = userRes.rows[0].id;
+
+    // Landing A/B: remember which variant this lead saw — first touch within a test run
+    const lp = parseLpCookie(req.cookies.get(LP_COOKIE)?.value);
+    if (lp) {
+      await pool.query(
+        `UPDATE users SET lp_run = $1, lp_variant = $2, lp_at = NOW()
+         WHERE id = $3 AND lp_run IS DISTINCT FROM $1`,
+        [lp.run, lp.variant, userId],
+      ).catch((err) => console.error('landing ab lead error:', err));
+    }
+
     const token = generateUserToken(userId, 60 * 60 * 24 * 3); // 3 days
 
     const response = NextResponse.json({ success: true, isSubscribed: false });

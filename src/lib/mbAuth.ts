@@ -1,8 +1,9 @@
 import { createHmac, scrypt, randomBytes, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
+import { isTestEnv } from './appEnv';
 
 const scryptAsync = promisify(scrypt);
-const MB_SECRET = process.env.MB_AUTH_SECRET ?? 'mb-dev-secret-change-in-prod';
+const MB_SECRET = process.env.MB_AUTH_SECRET || (isTestEnv ? 'mb-dev-secret-change-in-prod' : '');
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString('hex');

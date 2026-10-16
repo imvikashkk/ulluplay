@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Anton, Geist, Geist_Mono, Mukta, Poppins } from 'next/font/google';
 import CampaignTracker from '@/components/CampaignTracker';
+import { isTestEnv } from '@/lib/appEnv';
 import './globals.css';
 
 const geistSans = Geist({
@@ -36,6 +37,8 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://kaama.online'),
   title: 'Ullu Play',
   description: 'Masti Hai To Mast Hai',
+  // Keep the test server out of search results
+  ...(isTestEnv && { robots: { index: false, follow: false } }),
 };
 
 export default function RootLayout({
@@ -49,6 +52,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${poppins.variable} ${mukta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {isTestEnv && (
+          <div className="sticky top-0 z-[9999] bg-amber-400 py-1 text-center text-xs font-bold text-black">
+            TEST MODE: payments go to the SabPaisa sandbox, no real money is charged
+          </div>
+        )}
         {children}
         <CampaignTracker />
       </body>
