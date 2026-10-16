@@ -189,16 +189,16 @@ export default function OtpPage() {
             </>
           ) : (
             <>
-              <Hot>OTP</Hot> daalo
+              Enter <Hot>OTP</Hot>
             </>
           )}
         </h1>
         <p className="mt-1 text-base font-semibold text-white/90">
           {status === 'success' ? (
-            'अब मज़ा शुरू!'
+            'You’re all set. Enjoy the show!'
           ) : (
             <>
-              SMS में आया 6 नंबर का code
+              We’ve sent a 6-digit code to
               <br />
               <span className="text-white">{maskedMobile}</span>{' '}
               <button
@@ -207,7 +207,7 @@ export default function OtpPage() {
                 className="font-bold underline underline-offset-2"
                 style={{ color: YELLOW }}
               >
-                Number badlo
+                Change
               </button>
             </>
           )}
@@ -263,12 +263,12 @@ export default function OtpPage() {
           {status === 'loading' ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              Check ho raha hai...
+              Verifying...
             </span>
           ) : status === 'success' ? (
             <span className="flex items-center justify-center gap-2">
               <CircleCheck size={20} strokeWidth={2.5} aria-hidden />
-              Ho gaya!
+              Verified!
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
@@ -280,12 +280,12 @@ export default function OtpPage() {
       </form>
 
       <div className="mt-4 text-center text-sm">
-        <span className="text-white/75">Code nahi aaya? </span>
+        <span className="text-white/75">Didn’t get the code? </span>
         {timer > 0 ? (
-          <span className="font-bold text-white tabular-nums">{timer} sec ruko</span>
+          <span className="font-bold text-white tabular-nums">Resend in {timer}s</span>
         ) : (
           <button onClick={handleResend} className="font-bold underline underline-offset-2" style={{ color: YELLOW }}>
-            Dobara bhejo
+            Resend OTP
           </button>
         )}
       </div>

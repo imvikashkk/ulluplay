@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { MOVIES, SERIES } from '@/data/content';
 
 // Full-screen OTT poster wall for /auth and /subscription — tilted columns of series posters drifting
-// up/down, under a dark vignette. Real posters from content.json are mixed in between CSS/SVG-drawn ones.
+// up/down, under a dark vignette. Only CSS/SVG-drawn cards, no images.
 
 type Art = 'sun' | 'city' | 'hills' | 'rings' | 'rays' | 'moon';
 type Poster = { title: string; genre: string; from: string; to: string; art: Art; tag?: string };
@@ -111,25 +110,6 @@ function PosterCard({ p }: { p: Poster }) {
   );
 }
 
-// Real catalogue posters, one after every drawn one, so the wall reads as the actual library
-const REAL: string[] = [...SERIES, ...MOVIES].map((t) => t.poster).filter(Boolean);
-type Tile = { kind: 'drawn'; p: Poster } | { kind: 'real'; src: string };
-const TILES: Tile[] = POSTERS.flatMap((p, i): Tile[] =>
-  REAL.length ? [{ kind: 'drawn', p }, { kind: 'real', src: REAL[i % REAL.length] }] : [{ kind: 'drawn', p }],
-);
-
-function RealCard({ src }: { src: string }) {
-  return (
-    <div
-      className="relative w-full aspect-[2/3] overflow-hidden rounded-lg bg-white/5"
-      style={{ boxShadow: '0 10px 30px -10px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.06)' }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
-    </div>
-  );
-}
-
 const COLUMNS = 16;
 
 export default function PosterBackdrop({ dim = 0 }: { dim?: number }) {
@@ -153,14 +133,14 @@ export default function PosterBackdrop({ dim = 0 }: { dim?: number }) {
       >
         {Array.from({ length: COLUMNS }, (_, c) => {
           // Rotate the list per column so neighbours never line up the same poster
-          const k = (c * 5) % TILES.length;
-          const list = [...TILES.slice(k), ...TILES.slice(0, k)];
+          const k = (c * 5) % POSTERS.length;
+          const list = [...POSTERS.slice(k), ...POSTERS.slice(0, k)];
           return (
             <div key={c} className="overflow-hidden" style={{ height: '220vh', marginTop: c % 2 ? '-90px' : 0 }}>
               <div className={`flex flex-col gap-3 ${c % 2 ? 'kp-down' : 'kp-up'}`}>
-                {[...list, ...list].map((t, i) =>
-                  t.kind === 'real' ? <RealCard key={i} src={t.src} /> : <PosterCard key={i} p={t.p} />,
-                )}
+                {[...list, ...list].map((p, i) => (
+                  <PosterCard key={i} p={p} />
+                ))}
               </div>
             </div>
           );

@@ -12,7 +12,7 @@ import UpiPaySheet from './UpiPaySheet';
 const UI_META: { badge: string | null }[] = [
   { badge: null },
   { badge: null },
-  { badge: 'Sabse popular' },
+  { badge: 'Most popular' },
   { badge: 'Best value' },
 ];
 
@@ -162,7 +162,7 @@ export default function SubscriptionsPage() {
         setPaying(false);
       }
     } catch {
-      setError('Payment start nahi ho saka. Please try again.');
+      setError('Could not start the payment. Please try again.');
       setPaying(false);
     }
   };
@@ -195,14 +195,14 @@ export default function SubscriptionsPage() {
       <div className="relative z-10 mx-auto w-full max-w-xl px-4 pt-6 md:pt-10">
         {/* ── Header ── */}
         <div className="k-rise">
-          <p className="k-hindi m-0 text-[22px] font-extrabold leading-none" style={{ color: RED }}>
-            गरमा गरम !
+          <p className="m-0 text-[13px] font-extrabold uppercase tracking-[.25em] leading-none" style={{ color: RED }}>
+            Go Premium
           </p>
           <h1 className="k-display m-0 mt-2 text-[44px] md:text-[60px] text-white">
-            Apna <span style={{ color: YELLOW }}>pass</span> chuno
+            Choose your <span style={{ color: YELLOW }}>plan</span>
           </h1>
           <p className="m-0 mt-2 text-[13px] text-white/55">
-            Poori library unlock · Mobile ya laptop, kahin bhi dekho
+            Unlock the full library · Watch on mobile or laptop, anywhere
           </p>
         </div>
 
@@ -297,7 +297,7 @@ export default function SubscriptionsPage() {
 
         {/* Trust */}
         <ul className="m-0 mt-6 p-0 list-none grid grid-cols-3 gap-2 text-center">
-          {['Secure payment', 'Turant access', 'Koi auto-debit nahi'].map((t) => (
+          {['Secure payment', 'Instant access', 'No auto-debit'].map((t) => (
             <li key={t} className="text-[11px] text-white/45 px-2 py-2 rounded-md" style={{ border: `1px solid ${LINE}` }}>
               {t}
             </li>
@@ -316,7 +316,7 @@ export default function SubscriptionsPage() {
                 <img key={app.name} src={app.icon} alt={app.name} title={app.name} className="w-8 h-8 rounded-md bg-white object-contain p-0.5" />
               ))}
             </div>
-            <p className="m-0 text-[11px] text-white/55">Sirf PhonePe aur Paytm se payment support hai</p>
+            <p className="m-0 text-[11px] text-white/55">Payments supported via PhonePe and Paytm only</p>
           </div>
         )}
       </div>
@@ -327,7 +327,7 @@ export default function SubscriptionsPage() {
           {error && <p className="m-0 text-[12px] text-center" style={{ color: RED }}>{error}</p>}
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="m-0 text-[10px] font-bold uppercase tracking-[.2em] text-white/40">Aapka pass</p>
+              <p className="m-0 text-[10px] font-bold uppercase tracking-[.2em] text-white/40">Your plan</p>
               <p className="m-0 mt-0.5 text-[14px] font-bold text-white truncate">
                 {sel ? (
                   <>
@@ -347,7 +347,7 @@ export default function SubscriptionsPage() {
               {paying ? (
                 <>
                   <span className="w-4 h-4 rounded-full border-2" style={{ borderColor: `${INK} transparent ${INK} ${INK}`, animation: 'kSpin .8s linear infinite' }} />
-                  Ruko...
+                  Please wait...
                 </>
               ) : (
                 <>Pay ₹{sel?.price ?? ''} →</>

@@ -24,12 +24,12 @@ export default function AuthPage() {
   const hint = error
     ? { text: error, color: '#f87171' }
     : len === 0
-      ? { text: 'Apna 10 number ka mobile number daalo', color: 'rgba(255,255,255,.7)' }
+      ? { text: 'Enter your 10-digit mobile number', color: 'rgba(255,255,255,.7)' }
       : !isComplete
-        ? { text: `Aur ${10 - len} number daalo`, color: 'rgba(255,255,255,.8)' }
+        ? { text: `${10 - len} more digit${10 - len > 1 ? 's' : ''} to go`, color: 'rgba(255,255,255,.8)' }
         : !isValid
-          ? { text: 'Sahi mobile number daalo', color: '#f87171' }
-          : { text: 'Number sahi hai, ab aage badhein', color: '#4ade80' };
+          ? { text: 'Please enter a valid mobile number', color: '#f87171' }
+          : { text: 'Looks good! Tap below to continue', color: '#4ade80' };
 
   const nudge = () => {
     setShake(true);
@@ -40,7 +40,7 @@ export default function AuthPage() {
     if (submitted) return;
     // Button always looks tappable; an incomplete number shakes the field instead of a dead button
     if (!isValid) {
-      if (isComplete) setError('Sahi mobile number daalo');
+      if (isComplete) setError('Please enter a valid mobile number');
       nudge();
       return;
     }
@@ -67,7 +67,7 @@ export default function AuthPage() {
       });
       const data = await res.json();
       if (!data.success) {
-        setError(data.message ?? 'Kuch gadbad ho gayi. Dobara try karo.');
+        setError(data.message ?? 'Something went wrong. Please try again.');
         setSubmitted(false);
         return;
       }
@@ -82,7 +82,7 @@ export default function AuthPage() {
         );
       }
     } catch {
-      setError('Internet check karo aur dobara try karo.');
+      setError('Check your internet connection and try again.');
       setSubmitted(false);
     }
   };
@@ -92,8 +92,9 @@ export default function AuthPage() {
       <div className="text-center" style={{ textShadow: '0 2px 10px rgba(0,0,0,.8)' }}>
         <BrandLogo />
         <h1 className="mt-5 text-[28px] font-extrabold leading-tight">
-          Desi <Hot>Web Series</Hot> <span className="whitespace-nowrap">ka Ghar</span>
+          <Hot>Premium</Hot> Originals, <span className="whitespace-nowrap">Made for You</span>
         </h1>
+        <p className="mt-2 text-sm font-medium text-white/75">Exclusive series · Full HD · Watch anytime, anywhere</p>
       </div>
 
       <form
@@ -104,7 +105,7 @@ export default function AuthPage() {
         }}
       >
         <label htmlFor="mobile" className="block text-sm font-semibold text-white mb-2">
-          Mobile Number / मोबाइल नंबर
+          Mobile Number
         </label>
         <div
           onAnimationEnd={() => setShake(false)}
@@ -177,7 +178,7 @@ export default function AuthPage() {
           {submitted ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              Ruko...
+              Please wait...
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">

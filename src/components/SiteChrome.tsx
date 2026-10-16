@@ -2,22 +2,38 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { INK, LINE, RED, YELLOW } from '@/lib/brand';
 
-// Static wordmark — same parts as the auth logo, minus its animated glow
-export function Logo({ size = 28 }: { size?: number }) {
+// Text-only wordmark: chunky yellow ULLU with a red drop shadow, then a red PLAY tag with a play triangle
+export function Logo({ size = 28, adult = true, className = '' }: { size?: number; adult?: boolean; className?: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 select-none">
-      <span className="k-display" style={{ fontSize: size, color: YELLOW, letterSpacing: '0.04em' }}>
+    <span className={`inline-flex items-center select-none leading-none ${className}`} style={{ gap: size * 0.18 }}>
+      <span
+        className="k-display"
+        style={{ fontSize: size, color: YELLOW, letterSpacing: '0.03em', textShadow: `${size * 0.06}px ${size * 0.06}px 0 ${RED}` }}
+      >
         ULLU
       </span>
       <span
-        className="text-[9px] font-bold tracking-[.22em] px-1 py-px rounded-sm"
-        style={{ color: INK, background: YELLOW }}
+        className="k-display inline-flex items-center text-white"
+        style={{
+          fontSize: size * 0.5,
+          letterSpacing: '0.14em',
+          gap: size * 0.12,
+          padding: `${size * 0.12}px ${size * 0.2}px ${size * 0.12}px ${size * 0.16}px`,
+          borderRadius: size * 0.12,
+          background: RED,
+          transform: 'skewX(-8deg)',
+        }}
       >
+        <svg width={size * 0.36} height={size * 0.36} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5Z" />
+        </svg>
         PLAY
       </span>
-      <span className="text-[9px] font-extrabold px-1.5 py-px rounded-sm text-white" style={{ background: RED }}>
-        18+
-      </span>
+      {adult && (
+        <span className="text-[9px] font-extrabold px-1.5 py-px rounded-sm" style={{ color: INK, background: YELLOW }}>
+          18+
+        </span>
+      )}
     </span>
   );
 }

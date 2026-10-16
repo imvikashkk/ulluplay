@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import PosterBackdrop from './PosterBackdrop';
+import { Logo } from './SiteChrome';
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { CalendarDays, Clapperboard, Clock, Drama, Film, Heart, MonitorPlay, Play, Smartphone, Tv } from 'lucide-react';
+import { CalendarDays, Crown, Film, Gem, MonitorPlay, Play, ShieldCheck, Smartphone, Sparkles, Star } from 'lucide-react';
 
 export const RED = '#EF233C';
 export const YELLOW = '#FACC15';
@@ -18,31 +19,24 @@ export function Hot({ children }: { children: ReactNode }) {
 }
 
 export function BrandLogo() {
-  return (
-    <div className="inline-flex items-center gap-2 select-none">
-      <span className="ka-logo text-[34px] font-black tracking-wider leading-none">ULLU</span>
-      <span className="text-[10px] font-bold tracking-[.25em] px-1.5 py-0.5 rounded" style={{ color: INK, background: YELLOW }}>
-        PLAY
-      </span>
-    </div>
-  );
+  return <Logo size={44} adult={false} className="ka-logo" />;
 }
 
-// One-liners for the two scrolling strips — Hinglish, short, high-contrast
+// One-liners for the two scrolling strips — short, premium, high-contrast
 type Line = { icon: LucideIcon; text: string };
 const TOP_LINES: Line[] = [
-  { icon: Clapperboard, text: 'Nayi web series' },
-  { icon: CalendarDays, text: 'हर हफ्ते नए एपिसोड' },
-  { icon: MonitorPlay, text: 'Full HD' },
-  { icon: Drama, text: 'Desi कहानियाँ' },
-  { icon: Clock, text: 'Kabhi bhi, kahin bhi' },
+  { icon: Crown, text: 'Premium Originals' },
+  { icon: Sparkles, text: 'Exclusive Web Series' },
+  { icon: MonitorPlay, text: 'Full HD Streaming' },
+  { icon: CalendarDays, text: 'New Episodes Every Week' },
+  { icon: ShieldCheck, text: 'Safe & Private' },
 ];
 const BOTTOM_LINES: Line[] = [
-  { icon: Film, text: 'Original drama' },
-  { icon: Heart, text: 'Desi romance' },
-  { icon: Smartphone, text: 'Mobile pe dekho' },
-  { icon: Play, text: 'बिना रुकावट स्ट्रीमिंग' },
-  { icon: Tv, text: 'Naye episodes' },
+  { icon: Film, text: 'Blockbuster Stories' },
+  { icon: Star, text: 'Top Rated Shows' },
+  { icon: Smartphone, text: 'Mobile · Laptop · TV' },
+  { icon: Play, text: 'Smooth Playback' },
+  { icon: Gem, text: 'Premium Experience' },
 ];
 
 // Infinite strip of small cards; the list is rendered twice so translateX(-50%) loops seamlessly
@@ -99,12 +93,12 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           animation: kaShine 2.5s linear infinite;
           font-weight: 800;
         }
-        /* Solid bright logo — gradient text lost contrast on the busy background */
+        /* Soft pulsing glow behind the wordmark */
         @keyframes kaLogoGlow {
-          0%,100% { text-shadow: 0 2px 0 #b91c1c, 0 4px 14px rgba(0,0,0,.9), 0 0 18px ${RED}99; }
-          50%     { text-shadow: 0 2px 0 #b91c1c, 0 4px 14px rgba(0,0,0,.9), 0 0 30px ${RED}; }
+          0%,100% { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 10px ${RED}88); }
+          50%     { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 22px ${RED}); }
         }
-        .ka-logo { color: #FFD60A; animation: kaLogoGlow 2.4s ease-in-out infinite; }
+        .ka-logo { animation: kaLogoGlow 2.4s ease-in-out infinite; }
         .ka-btn {
           background: linear-gradient(90deg, #d90429, ${RED}, #ff7a18, ${YELLOW}, #ff7a18, ${RED}, #d90429);
           background-size: 300% auto;
@@ -144,15 +138,15 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           {children}
 
           <p className="mt-5 text-center text-xs leading-relaxed text-white/60">
-            Aage badhne par aap{' '}
+            By continuing, you agree to our{' '}
             <Link href="/terms" className="text-white underline underline-offset-2">
               Terms
             </Link>{' '}
-            aur{' '}
+            and{' '}
             <Link href="/privacy" className="text-white underline underline-offset-2">
-              Privacy
-            </Link>{' '}
-            maante ho. Koi dikkat?{' '}
+              Privacy Policy
+            </Link>
+            . Need help?{' '}
             <Link href="/support" className="text-white underline underline-offset-2">
               Contact
             </Link>
