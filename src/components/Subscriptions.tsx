@@ -1,20 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SupportButton from './SupportButton';
 import { HeaderAction, IconBack, SiteHeader } from './SiteChrome';
 import { INK, LINE, PANEL, RED, YELLOW } from '@/lib/brand';
 import PosterBackdrop from './PosterBackdrop';
 
-// Ticket stamp per plan index (order from API: cheapest first)
-const UI_META: { badge: string | null }[] = [
-  { badge: null },
-  { badge: null },
-  { badge: 'Most popular' },
-  { badge: 'Best value' },
-  { badge: null },
-];
+// Ticket stamp by plan length, so it survives price changes and reordering
+function badgeFor(days: number): string | null {
+  if (days === 365) return 'Best value';
+  if (days === 30) return 'Most popular';
+  return null;
+}
+
+// Ticket order by plan length: 1 Month (₹299), 1 Year (₹399), 15 Days (₹199), 2 Days (₹169); anything else after
+const ORDER = [30, 365, 15, 2];
+const rank = (days: number) => (ORDER.includes(days) ? ORDER.indexOf(days) : ORDER.length);
+
+// "₹1.1/din" — per-day cost makes the long plans' value visible next to the cheap ones
+function perDay(price: number, days: number): string | null {
+  if (days >= 36500) return 'Ek baar ka payment';
+  const v = price / days;
+  return `₹${v >= 10 ? Math.round(v) : Number(v.toFixed(1))}/din`;
+}
 
 interface ApiPlan {
   id: number;
@@ -45,8 +54,27 @@ export default function SubscriptionsPage() {
   const [paying, setPaying] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState('');
+  const [members, setMembers] = useState(0);
+  // Came from a short plan (expired or about to) — pitch the yearly pass instead
+  const [upgradeOffer, setUpgradeOffer] = useState(false);
+  const userPicked = useRef(false);
   const router = useRouter();
   const sel = plans.find((p) => p.id === selected) ?? null;
+  const yearly = plans.find((p) => p.duration_days === 365) ?? null;
+
+  // Shortest plan selected → offer the next one up if it costs only a little more
+  const byDays = [...plans].sort((a, b) => a.duration_days - b.duration_days);
+  const nextUp =
+    sel && byDays[0]?.id === sel.id && byDays[1] && byDays[1].price - sel.price <= 100 ? byDays[1] : null;
+
+  const pick = (id: number) => {
+    userPicked.current = true;
+    setSelected(id);
+  };
+
+  useEffect(() => {
+    if (upgradeOffer && yearly && !userPicked.current) setSelected(yearly.id);
+  }, [upgradeOffer, yearly]);
 
   // Back from the gateway's checkout restores this page from bfcache with the button still spinning
   useEffect(() => {
@@ -82,6 +110,9 @@ export default function SubscriptionsPage() {
         if (data.success && data.data.plan_name && data.data.sub_status === 'active') {
           setIsSubscribed(true);
         }
+        if (data.success && data.data.last_plan_days && data.data.last_plan_days < 30) {
+          setUpgradeOffer(true);
+        }
       })
       .catch(() => setIsSubscribed(false));
 
@@ -89,14 +120,19 @@ export default function SubscriptionsPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
-          const mapped: Plan[] = data.data.map((p: ApiPlan, i: number) => ({
-            ...p,
-            duration: formatDuration(p.duration_days),
-            ...(UI_META[i] ?? UI_META[UI_META.length - 1]),
-          }));
+          const mapped: Plan[] = data.data
+            .map((p: ApiPlan) => ({
+              ...p,
+              duration: formatDuration(p.duration_days),
+              badge: badgeFor(p.duration_days),
+            }))
+            .sort((a: Plan, b: Plan) => rank(a.duration_days) - rank(b.duration_days));
           setPlans(mapped);
-          // Default to the ₹299 plan
-          const def = mapped.find((p) => p.price === 299) ?? mapped[2] ?? mapped[0];
+          setMembers(data.members ?? 0);
+          // ?plan=year comes from the upgrade card on /profile
+          if (new URLSearchParams(window.location.search).get('plan') === 'year') setUpgradeOffer(true);
+          // Default to the 1 Month plan
+          const def = mapped.find((p) => p.duration_days === 30) ?? mapped[0];
           setSelected(def?.id ?? null);
         }
       })
@@ -195,7 +231,40 @@ export default function SubscriptionsPage() {
           <p className="m-0 mt-2 text-[13px] text-white/55">
             Unlock the full library · Watch on mobile or laptop, anywhere
           </p>
+          {members >= 100 && (
+            <p className="m-0 mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-white/75">
+              <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e' }} />
+              {Math.floor(members / 100) * 100}+ members abhi active hain
+            </p>
+          )}
         </div>
+
+        {/* ── Upgrade offer for short-plan users ── */}
+        {upgradeOffer && yearly && (
+          <div
+            className="k-rise mt-5 rounded-lg px-4 py-3 flex items-center gap-3"
+            style={{ background: 'rgba(250,204,21,.08)', border: `1.5px dashed ${YELLOW}` }}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="m-0 text-[14px] font-extrabold text-white">
+                {isSubscribed ? 'Upgrade karo' : 'Wapas aane ka shukriya!'} · 1 Year sirf <span style={{ color: YELLOW }}>₹{yearly.price}</span>
+              </p>
+              <p className="m-0 mt-0.5 text-[12px] text-white/55">
+                {perDay(yearly.price, yearly.duration_days)} · baar baar recharge ka jhanjhat khatam
+                {isSubscribed && ' · bache hue din jud jayenge'}
+              </p>
+            </div>
+            {selected !== yearly.id && (
+              <button
+                onClick={() => pick(yearly.id)}
+                className="shrink-0 h-9 px-3 rounded-md text-[12px] font-extrabold cursor-pointer"
+                style={{ background: YELLOW, color: INK, border: 0 }}
+              >
+                Chuno
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ── Tickets ── */}
         <div className="mt-7 flex flex-col gap-3" role="radiogroup" aria-label="Plans">
@@ -217,8 +286,8 @@ export default function SubscriptionsPage() {
                   role="radio"
                   aria-checked={isSel}
                   tabIndex={0}
-                  onClick={() => setSelected(plan.id)}
-                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelected(plan.id)}
+                  onClick={() => pick(plan.id)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && pick(plan.id)}
                   className="k-ticket k-rise relative flex items-stretch rounded-lg cursor-pointer select-none outline-none"
                   style={{
                     animationDelay: `${0.05 + i * 0.06}s`,
@@ -259,7 +328,12 @@ export default function SubscriptionsPage() {
                           </>
                         )}
                       </div>
-                      <p className="m-0 mt-1 text-[12px] font-semibold text-white/80">{plan.name}</p>
+                      <p className="m-0 mt-1 text-[12px] font-semibold text-white/80">
+                        {plan.name}
+                        <span className="ml-2 font-bold" style={{ color: plan.duration_days >= 30 ? YELLOW : 'rgba(245,239,230,.45)' }}>
+                          {perDay(plan.price, plan.duration_days)}
+                        </span>
+                      </p>
                       {plan.description && <p className="m-0 mt-0.5 text-[12px] text-white/50 leading-snug">{plan.description}</p>}
                     </div>
 
@@ -285,6 +359,24 @@ export default function SubscriptionsPage() {
               );
             })}
         </div>
+
+        {/* Nudge off the shortest plan */}
+        {sel && nextUp && (
+          <div className="mt-3 rounded-lg px-4 py-3 flex items-center gap-3" style={{ background: PANEL, border: `1.5px solid ${RED}` }}>
+            <p className="m-0 min-w-0 flex-1 text-[13px] text-white/85 leading-snug">
+              Sirf <b style={{ color: YELLOW }}>₹{nextUp.price - sel.price}</b> aur mein{' '}
+              <b className="text-white">{nextUp.duration}</b> ka pass —{' '}
+              {Math.round(nextUp.duration_days / sel.duration_days)}x zyada din
+            </p>
+            <button
+              onClick={() => pick(nextUp.id)}
+              className="shrink-0 h-9 px-3 rounded-md text-[12px] font-extrabold cursor-pointer"
+              style={{ background: YELLOW, color: INK, border: 0 }}
+            >
+              ₹{nextUp.price} lo
+            </button>
+          </div>
+        )}
 
         {/* Trust */}
         <ul className="m-0 mt-6 p-0 list-none grid grid-cols-3 gap-2 text-center">

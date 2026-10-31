@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
       `SELECT u.id, u.mobile, u.created_at,
               s.status AS sub_status, s.end_date,
               p.name AS plan_name, p.price AS plan_price, p.duration_days,
-              GREATEST(0, CEIL(EXTRACT(EPOCH FROM (s.end_date - NOW())) / 86400))::int AS days_left
+              GREATEST(0, CEIL(EXTRACT(EPOCH FROM (s.end_date - NOW())) / 86400))::int AS days_left,
+              -- Most recent plan ever bought (active or not) — drives the upgrade offer for short-plan users
+              (SELECT p2.duration_days FROM subscriptions s2 JOIN plans p2 ON p2.id = s2.plan_id
+               WHERE s2.user_id = u.id ORDER BY s2.end_date DESC LIMIT 1) AS last_plan_days
        FROM users u
        LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active' AND s.end_date > NOW()
        LEFT JOIN plans p ON p.id = s.plan_id

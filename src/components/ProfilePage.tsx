@@ -61,6 +61,18 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [yearlyPrice, setYearlyPrice] = useState<number | null>(null);
+
+  // Yearly price for the upgrade card — read live so it follows plan price changes
+  useEffect(() => {
+    fetch('/api/plans')
+      .then((r) => r.json())
+      .then((data) => {
+        const y = data.success && data.data.find((p: { duration_days: number }) => p.duration_days === 365);
+        if (y) setYearlyPrice(y.price);
+      })
+      .catch(() => {});
+  }, []);
 
   // ✅ useLayoutEffect — browser paint se PEHLE chalta hai (synchronous flush)
   // Server pe nahi chalta, sirf client pe — isliye SSR mismatch nahi hoga
@@ -239,6 +251,22 @@ export default function ProfilePage() {
             <p className="m-0 px-5 pb-5 text-[13px] text-white/55">Pass lo aur poori library abhi unlock karo.</p>
           )}
         </section>
+
+        {/* ── Upgrade card: short plan running out ── */}
+        {hasSub && low && profile.duration_days !== null && profile.duration_days < 30 && yearlyPrice !== null && (
+          <a
+            href="/subscription?plan=year"
+            className="mt-5 block rounded-lg px-4 py-3 no-underline"
+            style={{ background: 'rgba(250,204,21,.08)', border: `1.5px dashed ${YELLOW}` }}
+          >
+            <p className="m-0 text-[14px] font-extrabold text-white">
+              Pass khatam hone wala hai · 1 Year sirf <span style={{ color: YELLOW }}>₹{yearlyPrice}</span>
+            </p>
+            <p className="m-0 mt-0.5 text-[12px] text-white/55">
+              ₹{Number((yearlyPrice / 365).toFixed(1))}/din · bache hue din jud jayenge →
+            </p>
+          </a>
+        )}
 
         {/* ── Actions ── */}
         <div className="mt-8 flex flex-col gap-3" style={{ ...anim('.14s'), opacity: fromCache ? 1 : 0 }}>
