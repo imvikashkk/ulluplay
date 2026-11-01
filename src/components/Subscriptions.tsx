@@ -14,8 +14,8 @@ function badgeFor(days: number): string | null {
   return null;
 }
 
-// Ticket order by plan length: 1 Month (₹299), 1 Year (₹399), 15 Days (₹199), 2 Days (₹169); anything else after
-const ORDER = [30, 365, 15, 2];
+// Ticket order by plan length: 15 Days (₹199), 1 Month (₹299), 1 Year (₹399), 2 Days (₹169); anything else after
+const ORDER = [15, 30, 365, 2];
 const rank = (days: number) => (ORDER.includes(days) ? ORDER.indexOf(days) : ORDER.length);
 
 // "₹1.1/din" — per-day cost makes the long plans' value visible next to the cheap ones
