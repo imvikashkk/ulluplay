@@ -97,7 +97,9 @@ function PosterCard({ p }: { p: Poster }) {
           boxShadow: '0 10px 30px -10px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.06)',
         }}
       >
-        <Image src={p.img} alt="" fill sizes="150px" style={{ objectFit: 'cover' }} />
+        {/* Eager: the wall is on screen from the first paint (one of these is the page's LCP), and there are
+            only 4 distinct URLs, so the repeats come from cache */}
+        <Image src={p.img} alt="" fill sizes="150px" loading="eager" style={{ objectFit: 'cover' }} />
       </div>
     );
   }
