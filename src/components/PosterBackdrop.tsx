@@ -1,25 +1,36 @@
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 // Full-screen OTT poster wall for /auth and /subscription — tilted columns of series posters drifting
-// up/down, under a dark vignette. Only CSS/SVG-drawn cards, no images.
+// up/down, under a dark vignette. Mostly real (non-bold) content posters repeated, with a few CSS/SVG-drawn cards mixed in.
 
 type Art = 'sun' | 'city' | 'hills' | 'rings' | 'rays' | 'moon';
-type Poster = { title: string; genre: string; from: string; to: string; art: Art; tag?: string };
+type Poster = { title: string; genre: string; from: string; to: string; art: Art; tag?: string; img?: string };
 
-const POSTERS: Poster[] = [
-  { title: 'Haveli', genre: 'Thriller', from: '#7f1d1d', to: '#1c0a0a', art: 'moon', tag: 'NEW' },
-  { title: 'Shehar', genre: 'Crime', from: '#1e3a8a', to: '#0b1020', art: 'city' },
-  { title: 'Pehli Mulaqat', genre: 'Romance', from: '#be185d', to: '#2a0a18', art: 'sun', tag: 'TOP 10' },
-  { title: 'Gaon Ki Kahani', genre: 'Drama', from: '#a16207', to: '#1f1405', art: 'hills' },
-  { title: 'Chakravyuh', genre: 'Action', from: '#c2410c', to: '#1a0a04', art: 'rays', tag: 'NEW' },
-  { title: 'Raaz', genre: 'Mystery', from: '#4c1d95', to: '#0f0820', art: 'rings' },
-  { title: 'Mohalla', genre: 'Comedy', from: '#0f766e', to: '#04201d', art: 'city' },
-  { title: 'Baazi', genre: 'Thriller', from: '#991b1b', to: '#140606', art: 'rays' },
-  { title: 'Safar', genre: 'Drama', from: '#0369a1', to: '#06121c', art: 'hills', tag: 'TOP 10' },
-  { title: 'Dhadkan', genre: 'Romance', from: '#db2777', to: '#22061a', art: 'moon' },
-  { title: 'Khiladi', genre: 'Action', from: '#b45309', to: '#190d03', art: 'sun' },
-  { title: 'Rishta', genre: 'Family', from: '#7c3aed', to: '#140a26', art: 'rings', tag: 'NEW' },
+const CDN = 'https://image-kaamaott.b-cdn.net';
+
+// Real (non-bold) content posters — the bulk of the wall
+const IMG_POSTERS: Poster[] = [
+  { title: 'Love Guru', genre: 'Comedy', from: '#1e3a8a', to: '#0b1020', art: 'city', img: `${CDN}/love_guru-poster.png` },
+  { title: 'Gore Gore Gal', genre: 'Romance', from: '#be185d', to: '#2a0a18', art: 'sun', img: `${CDN}/gore_gore_gal-poster.png` },
+  { title: 'Farebi Yaar', genre: 'Thriller', from: '#991b1b', to: '#140606', art: 'rays', img: `${CDN}/farebi_yaar-poster.png` },
+  { title: 'De De Pyar De', genre: 'Romance', from: '#db2777', to: '#22061a', art: 'moon', img: `${CDN}/de_De_pyar_de-poster.png` },
 ];
+
+// A few drawn cards sprinkled in for variety
+const DRAWN_POSTERS: Poster[] = [
+  { title: 'Haveli', genre: 'Thriller', from: '#7f1d1d', to: '#1c0a0a', art: 'moon', tag: 'NEW' },
+  { title: 'Pehli Mulaqat', genre: 'Romance', from: '#be185d', to: '#2a0a18', art: 'sun', tag: 'TOP 10' },
+  { title: 'Raaz', genre: 'Mystery', from: '#4c1d95', to: '#0f0820', art: 'rings' },
+  { title: 'Safar', genre: 'Drama', from: '#0369a1', to: '#06121c', art: 'hills', tag: 'TOP 10' },
+];
+
+// Each round: all 4 image posters (order shifted per round so repeats don't line up), then 1 drawn card
+const POSTERS: Poster[] = DRAWN_POSTERS.flatMap((drawn, r) => [
+  ...IMG_POSTERS.slice(r),
+  ...IMG_POSTERS.slice(0, r),
+  drawn,
+]);
 
 function Motif({ art }: { art: Art }): ReactNode {
   const s = { fill: 'none', stroke: 'rgba(255,255,255,.35)', strokeWidth: 1.5 };
@@ -76,6 +87,20 @@ function Motif({ art }: { art: Art }): ReactNode {
 }
 
 function PosterCard({ p }: { p: Poster }) {
+  // Real poster already carries its own title art — just show the image
+  if (p.img) {
+    return (
+      <div
+        className="relative w-full aspect-[2/3] overflow-hidden rounded-lg"
+        style={{
+          background: `linear-gradient(160deg, ${p.from} 0%, ${p.to} 100%)`,
+          boxShadow: '0 10px 30px -10px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.06)',
+        }}
+      >
+        <Image src={p.img} alt="" fill sizes="150px" style={{ objectFit: 'cover' }} />
+      </div>
+    );
+  }
   return (
     <div
       className="relative w-full aspect-[2/3] overflow-hidden rounded-lg"
@@ -133,7 +158,7 @@ export default function PosterBackdrop({ dim = 0 }: { dim?: number }) {
       >
         {Array.from({ length: COLUMNS }, (_, c) => {
           // Rotate the list per column so neighbours never line up the same poster
-          const k = (c * 5) % POSTERS.length;
+          const k = (c * 7) % POSTERS.length;
           const list = [...POSTERS.slice(k), ...POSTERS.slice(0, k)];
           return (
             <div key={c} className="overflow-hidden" style={{ height: '220vh', marginTop: c % 2 ? '-90px' : 0 }}>
