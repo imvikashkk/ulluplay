@@ -4,7 +4,7 @@ import { SiteFooter } from '@/components/SiteChrome';
 import { INK, LINE, PANEL, YELLOW } from '@/lib/brand';
 
 export const metadata: Metadata = {
-  title: 'Support | Ullu Play',
+  title: 'Support | Kama OTT',
 };
 
 const CHANNELS = [

@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { INK, RED, YELLOW } from '@/lib/brand';
+import { PANEL_INK as INK, PANEL_RED as RED, PANEL_YELLOW as YELLOW } from '@/lib/brand';
 
 // Shared frame for the internal dashboards (admin + media buyer):
 // dark brand sidebar on desktop, top bar + scrollable tabs on phones, warm paper content area.
@@ -21,7 +21,7 @@ function Brand({ role }: { role: string }) {
   return (
     <div className="flex items-center gap-1.5 select-none">
       <span className="k-display text-[24px]" style={{ color: YELLOW, letterSpacing: '0.04em' }}>
-        ULLU PLAY
+        KAMA OTT
       </span>
       <span className="text-[9px] font-bold tracking-[.18em] uppercase px-1.5 py-0.5 rounded-sm" style={{ background: RED, color: '#fff' }}>
         {role}
@@ -51,7 +51,7 @@ export default function PanelShell<K extends string>({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-[100dvh] text-stone-900" style={{ background: PAPER, fontFamily: 'var(--font-poppins), system-ui, sans-serif' }}>
+    <div className="k-legacy min-h-[100dvh] text-stone-900" style={{ background: PAPER, fontFamily: 'var(--font-poppins), system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .fu { animation: fadeUp .35s cubic-bezier(.22,1,.36,1) both; }
@@ -202,7 +202,7 @@ export function PanelLoginFrame({
   children: ReactNode;
 }) {
   return (
-    <main className="k-body k-grain relative min-h-[100dvh] flex items-center justify-center px-4 py-10">
+    <main className="k-body k-legacy k-grain relative min-h-[100dvh] flex items-center justify-center px-4 py-10">
       <div className="relative z-10 w-full max-w-sm k-rise">
         <div className="mb-6">
           <Brand role={role} />

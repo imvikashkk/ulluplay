@@ -82,7 +82,7 @@ function OfferCountdown() {
       style={{ background: `linear-gradient(90deg, ${RED}2e, ${RED}0a)`, border: `1px solid ${RED}55` }}
     >
       <div className="leading-tight">
-        <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[.14em]" style={{ color: '#ff5a6e' }}>
+        <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[.14em]" style={{ color: '#E8566A' }}>
           <Clock size={11} strokeWidth={2.75} className="k-tick" aria-hidden /> Special offer
         </span>
         <span className="block text-[10px] text-white/55">Valid till {date}, 11:59 PM</span>
@@ -94,7 +94,7 @@ function OfferCountdown() {
             <span className="flex flex-col items-center">
               <span
                 className="min-w-[24px] rounded-[4px] px-1 py-0.5 text-center text-[13px] font-extrabold leading-none tabular-nums text-white"
-                style={{ background: i === 2 ? RED : 'rgba(0,0,0,.45)', border: `1px solid ${i === 2 ? RED : 'rgba(245,239,230,.12)'}` }}
+                style={{ background: i === 2 ? RED : 'rgba(0,0,0,.45)', border: `1px solid ${i === 2 ? RED : 'rgba(246,236,221,.12)'}` }}
               >
                 {String(v).padStart(2, '0')}
               </span>
@@ -114,7 +114,7 @@ function MonthPerks({ month, weekly }: { month: Plan; weekly: Plan | null }) {
   return (
     <p
       className="m-0 mt-2 inline-block rounded-md px-2 py-1 text-[11px] font-semibold leading-snug text-white/65"
-      style={{ background: 'rgba(245,239,230,.05)', border: '1px solid rgba(245,239,230,.12)' }}
+      style={{ background: 'rgba(246,236,221,.05)', border: '1px solid rgba(246,236,221,.12)' }}
     >
       Har hafte recharge se <span style={{ color: `${YELLOW}cc` }}>₹{saving} ki bachat</span>
     </p>
@@ -270,7 +270,7 @@ export default function SubscriptionsPage() {
     <main className="k-body k-grain relative min-h-[100dvh] overflow-x-hidden pb-28">
       <style>{`
         .k-ticket { transition: border-color .2s ease; }
-        .k-ticket:focus-visible { box-shadow: 0 0 0 3px rgba(250,204,21,.35); }
+        .k-ticket:focus-visible { box-shadow: 0 0 0 3px rgba(212,162,76,.35); }
         @keyframes kSpin { to { transform: rotate(360deg); } }
         @keyframes kTick { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
         .k-tick { animation: kTick 1s steps(2, jump-none) infinite; }
@@ -316,7 +316,7 @@ export default function SubscriptionsPage() {
         {upgradeOffer && yearly && (
           <div
             className="k-rise mt-5 rounded-lg px-4 py-3 flex items-center gap-3"
-            style={{ background: 'rgba(250,204,21,.08)', border: `1.5px dashed ${YELLOW}` }}
+            style={{ background: 'rgba(212,162,76,.08)', border: `1.5px dashed ${YELLOW}` }}
           >
             <div className="min-w-0 flex-1">
               <p className="m-0 text-[14px] font-extrabold text-white">
@@ -371,7 +371,7 @@ export default function SubscriptionsPage() {
                   {/* Stub */}
                   <div
                     className="w-[96px] sm:w-[112px] shrink-0 flex flex-col items-center justify-center rounded-l-[7px] py-3"
-                    style={{ background: isSel ? YELLOW : 'rgba(245,239,230,.04)', color: isSel ? INK : '#fff' }}
+                    style={{ background: isSel ? YELLOW : 'rgba(246,236,221,.04)', color: isSel ? INK : '#fff' }}
                   >
                     {plan.duration_days >= 36500 ? (
                       <>
@@ -395,8 +395,8 @@ export default function SubscriptionsPage() {
 
                   {/* Perforation */}
                   <div className="relative w-0 shrink-0" style={{ borderLeft: `2px dashed ${isSel ? INK : LINE}` }}>
-                    <span className="absolute -top-[9px] -left-[9px] w-4 h-4 rounded-full" style={{ background: '#0c0809', border: `1.5px solid ${isSel ? YELLOW : LINE}`, clipPath: 'inset(50% 0 0 0)' }} />
-                    <span className="absolute -bottom-[9px] -left-[9px] w-4 h-4 rounded-full" style={{ background: '#0c0809', border: `1.5px solid ${isSel ? YELLOW : LINE}`, clipPath: 'inset(0 0 50% 0)' }} />
+                    <span className="absolute -top-[9px] -left-[9px] w-4 h-4 rounded-full" style={{ background: '#0B0507', border: `1.5px solid ${isSel ? YELLOW : LINE}`, clipPath: 'inset(50% 0 0 0)' }} />
+                    <span className="absolute -bottom-[9px] -left-[9px] w-4 h-4 rounded-full" style={{ background: '#0B0507', border: `1.5px solid ${isSel ? YELLOW : LINE}`, clipPath: 'inset(0 0 50% 0)' }} />
                   </div>
 
                   {/* Body */}
@@ -417,7 +417,7 @@ export default function SubscriptionsPage() {
                       </div>
                       <p className="m-0 mt-1 text-[12px] font-semibold text-white/80">
                         {plan.name}
-                        <span className="ml-2 font-bold" style={{ color: plan.duration_days >= 30 ? YELLOW : 'rgba(245,239,230,.45)' }}>
+                        <span className="ml-2 font-bold" style={{ color: plan.duration_days >= 30 ? YELLOW : 'rgba(246,236,221,.45)' }}>
                           {perDay(plan.price, plan.duration_days)}
                         </span>
                       </p>
@@ -431,7 +431,7 @@ export default function SubscriptionsPage() {
                     {/* Radio */}
                     <span
                       className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center"
-                      style={{ border: `2px solid ${isSel ? YELLOW : 'rgba(245,239,230,.25)'}` }}
+                      style={{ border: `2px solid ${isSel ? YELLOW : 'rgba(246,236,221,.25)'}` }}
                     >
                       {isSel && <span className="w-3 h-3 rounded-full" style={{ background: YELLOW }} />}
                     </span>

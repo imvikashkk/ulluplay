@@ -1,36 +1,44 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { INK, LINE, RED, YELLOW } from '@/lib/brand';
+import { GOLD_GRADIENT, GOLD_LIGHT, INK, LINE, RED, YELLOW } from '@/lib/brand';
 
-// Text-only wordmark: chunky yellow ULLU with a red drop shadow, then a red PLAY tag with a play triangle
+// Text-only wordmark: gold-foil KAMA, then a crimson OTT pill (thin gold edge) with a play triangle
 export function Logo({ size = 28, adult = true, className = '' }: { size?: number; adult?: boolean; className?: string }) {
   return (
-    <span className={`inline-flex items-center select-none leading-none ${className}`} style={{ gap: size * 0.18 }}>
+    <span className={`inline-flex items-center select-none leading-none ${className}`} style={{ gap: size * 0.2 }}>
       <span
-        className="k-display"
-        style={{ fontSize: size, color: YELLOW, letterSpacing: '0.03em', textShadow: `${size * 0.06}px ${size * 0.06}px 0 ${RED}` }}
-      >
-        ULLU
-      </span>
-      <span
-        className="k-display inline-flex items-center text-white"
+        className="k-display k-gold"
         style={{
-          fontSize: size * 0.5,
-          letterSpacing: '0.14em',
-          gap: size * 0.12,
-          padding: `${size * 0.12}px ${size * 0.2}px ${size * 0.12}px ${size * 0.16}px`,
-          borderRadius: size * 0.12,
-          background: RED,
-          transform: 'skewX(-8deg)',
+          fontSize: size * 1.08,
+          letterSpacing: '0.06em',
         }}
       >
-        <svg width={size * 0.36} height={size * 0.36} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        KAMA
+      </span>
+      <span
+        className="k-display inline-flex items-center"
+        style={{
+          fontSize: size * 0.55,
+          letterSpacing: '0.16em',
+          gap: size * 0.1,
+          padding: `${size * 0.13}px ${size * 0.22}px ${size * 0.11}px ${size * 0.16}px`,
+          borderRadius: 999,
+          color: GOLD_LIGHT,
+          background: `linear-gradient(180deg, #E0213F, ${RED} 60%, #8E0B22)`,
+          border: `1px solid ${YELLOW}88`,
+          boxShadow: `0 ${size * 0.08}px ${size * 0.3}px -${size * 0.1}px ${RED}`,
+        }}
+      >
+        <svg width={size * 0.32} height={size * 0.32} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5Z" />
         </svg>
-        PLAY
+        OTT
       </span>
       {adult && (
-        <span className="text-[9px] font-extrabold px-1.5 py-px rounded-sm" style={{ color: INK, background: YELLOW }}>
+        <span
+          className="text-[9px] font-bold px-1.5 py-px rounded-full"
+          style={{ color: YELLOW, border: `1px solid ${YELLOW}99`, background: INK }}
+        >
           18+
         </span>
       )}
@@ -43,9 +51,14 @@ export function SiteHeader({ right, sticky = true }: { right?: ReactNode; sticky
   return (
     <header
       className={`${sticky ? 'sticky top-0' : 'relative'} z-40 flex items-center justify-between gap-3 px-4 md:px-10 h-14 md:h-16`}
-      style={{ background: INK, borderBottom: `1px solid ${LINE}` }}
+      style={{
+        background: 'rgba(11,5,7,.82)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${YELLOW}26`,
+      }}
     >
-      <Link href="/" className="no-underline" aria-label="Ullu Play home">
+      <Link href="/" className="no-underline" aria-label="Kama OTT home">
         <Logo />
       </Link>
       <div className="flex items-center gap-2">{right}</div>
@@ -66,10 +79,10 @@ export function HeaderAction({
   solid?: boolean;
 }) {
   const cls =
-    'inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-[12px] font-semibold no-underline transition-colors cursor-pointer';
+    'inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-[12px] font-semibold no-underline transition-colors cursor-pointer';
   const style = solid
-    ? { background: YELLOW, color: INK, border: `1px solid ${YELLOW}` }
-    : { background: 'transparent', color: 'rgba(245,239,230,.75)', border: `1px solid ${LINE}` };
+    ? { background: GOLD_GRADIENT, color: INK, border: `1px solid ${YELLOW}` }
+    : { background: 'transparent', color: 'rgba(246,236,221,.75)', border: `1px solid ${LINE}` };
   return href ? (
     <Link href={href} className={cls} style={style}>
       {children}
@@ -89,20 +102,20 @@ export function SiteFooter() {
         style={{
           fontSize: 'clamp(64px, 16vw, 180px)',
           color: 'transparent',
-          WebkitTextStroke: '1px rgba(245,239,230,.14)',
+          WebkitTextStroke: '1px rgba(212,162,76,.22)',
         }}
       >
-        ULLU
+        KAMA
       </p>
       <div className="mt-6 flex flex-col-reverse md:flex-row md:items-center justify-between gap-4">
-        <p className="m-0 text-[12px] text-white/35">© 2026 Ullu Play · kaama.online · Sirf 18+ ke liye</p>
+        <p className="m-0 text-[12px] text-white/35">© 2026 Kama OTT · kamaott.com · Sirf 18+ ke liye</p>
         <nav className="flex gap-5 text-[13px]">
           {[
             ['Privacy', '/privacy'],
             ['Terms', '/terms'],
             ['Support', '/support'],
           ].map(([t, href]) => (
-            <Link key={t} href={href} className="text-white/55 hover:text-[#FACC15] no-underline transition-colors">
+            <Link key={t} href={href} className="text-white/55 hover:text-[#D4A24C] no-underline transition-colors">
               {t}
             </Link>
           ))}

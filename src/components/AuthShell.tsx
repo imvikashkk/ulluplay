@@ -5,9 +5,9 @@ import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { CalendarDays, Crown, Film, Gem, MonitorPlay, Play, ShieldCheck, Smartphone, Sparkles, Star } from 'lucide-react';
 
-export const RED = '#EF233C';
-export const YELLOW = '#FACC15';
-export const INK = '#0C0809';
+export const RED = '#C8102E';
+export const YELLOW = '#D4A24C';
+export const INK = '#0B0507';
 // Plain, easy-to-read faces: Poppins for Latin, Mukta picks up Devanagari
 export const FONT = "'Poppins', 'Mukta', system-ui, sans-serif";
 
@@ -54,7 +54,7 @@ function Marquee({ items, reverse = false }: { items: Line[]; reverse?: boolean 
             aria-hidden={i >= items.length}
             className="shrink-0 inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold text-white"
             style={{
-              background: 'rgba(12,8,9,.6)',
+              background: 'rgba(11,5,7,.6)',
               border: `1px solid ${RED}66`,
               boxShadow: `0 4px 16px -6px ${RED}88`,
               backdropFilter: 'blur(6px)',
@@ -83,7 +83,7 @@ export function AuthStyles() {
       .ka-marquee { animation: kaScroll 28s linear infinite; }
       .ka-marquee-rev { animation: kaScroll 28s linear infinite reverse; }
       .ka-hot {
-        background: linear-gradient(90deg, #ff4d6d, ${YELLOW}, #ff9a3c, #ff4d6d);
+        background: linear-gradient(90deg, #E8344F, ${YELLOW}, #F3D58A, #E8344F);
         background-size: 200% auto;
         -webkit-background-clip: text; background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -92,12 +92,12 @@ export function AuthStyles() {
       }
       /* Soft pulsing glow behind the wordmark */
       @keyframes kaLogoGlow {
-        0%,100% { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 10px ${RED}88); }
-        50%     { filter: drop-shadow(0 4px 12px rgba(0,0,0,.9)) drop-shadow(0 0 22px ${RED}); }
+        0%,100% { filter: drop-shadow(0 0 8px ${YELLOW}33); }
+        50%     { filter: drop-shadow(0 0 16px ${YELLOW}66); }
       }
       .ka-logo { animation: kaLogoGlow 2.4s ease-in-out infinite; }
       .ka-btn {
-        background: linear-gradient(90deg, #d90429, ${RED}, #ff7a18, ${YELLOW}, #ff7a18, ${RED}, #d90429);
+        background: linear-gradient(90deg, #8E0B22, ${RED}, #A8772B, ${YELLOW}, #A8772B, ${RED}, #8E0B22);
         background-size: 300% auto;
         animation: kaShine 4s linear infinite, kaGlow 2.4s ease-in-out infinite;
       }
@@ -133,7 +133,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
         <div
           className="ka-rise w-full max-w-sm rounded-3xl p-6"
           style={{
-            background: 'rgba(12,8,9,.38)',
+            background: 'rgba(11,5,7,.38)',
             border: `1px solid ${YELLOW}33`,
             backdropFilter: 'blur(14px) saturate(1.3)',
             WebkitBackdropFilter: 'blur(14px) saturate(1.3)',

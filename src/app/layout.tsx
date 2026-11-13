@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Anton, Geist, Geist_Mono, Mukta, Poppins } from 'next/font/google';
+import { Anton, Bebas_Neue, Geist, Geist_Mono, Mukta, Poppins } from 'next/font/google';
 import CampaignTracker from '@/components/CampaignTracker';
 import { isTestEnv } from '@/lib/appEnv';
 import './globals.css';
@@ -14,9 +14,16 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// Site look (everything outside /auth): Anton for poster-style headings, Poppins + Mukta for text
+// Site look: Bebas Neue for headings (Anton kept for the admin panels), Poppins + Mukta for text
 const anton = Anton({
   variable: '--font-anton',
+  weight: '400',
+  subsets: ['latin'],
+});
+
+// Kama OTT headings
+const bebas = Bebas_Neue({
+  variable: '--font-bebas',
   weight: '400',
   subsets: ['latin'],
 });
@@ -34,8 +41,8 @@ const mukta = Mukta({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://kaama.online'),
-  title: 'Ullu Play',
+  metadataBase: new URL('https://kamaott.com'),
+  title: 'Kama OTT',
   description: 'Masti Hai To Mast Hai',
   // Keep the test server out of search results
   ...(isTestEnv && { robots: { index: false, follow: false } }),
@@ -49,7 +56,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${poppins.variable} ${mukta.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${bebas.variable} ${poppins.variable} ${mukta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {isTestEnv && (

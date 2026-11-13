@@ -192,7 +192,7 @@ export default function ProfilePage() {
         >
           <div className="flex items-start justify-between px-5 pt-5">
             <div>
-              <p className="m-0 text-[10px] font-bold tracking-[.25em] uppercase opacity-60">Ullu Play pass</p>
+              <p className="m-0 text-[10px] font-bold tracking-[.25em] uppercase opacity-60">Kama OTT pass</p>
               {loading ? (
                 <div className="mt-2 h-8 w-40 rounded animate-pulse" style={{ background: 'rgba(128,128,128,.25)' }} />
               ) : (
@@ -201,7 +201,7 @@ export default function ProfilePage() {
             </div>
             <span
               className="k-display text-[13px] px-2 py-1 rounded-sm"
-              style={{ background: hasSub ? INK : 'rgba(245,239,230,.08)', color: hasSub ? YELLOW : 'rgba(245,239,230,.5)' }}
+              style={{ background: hasSub ? INK : 'rgba(246,236,221,.08)', color: hasSub ? YELLOW : 'rgba(246,236,221,.5)' }}
             >
               {loading ? '···' : hasSub ? 'Active' : 'Inactive'}
             </span>
@@ -257,7 +257,7 @@ export default function ProfilePage() {
           <a
             href="/subscription?plan=year"
             className="mt-5 block rounded-lg px-4 py-3 no-underline"
-            style={{ background: 'rgba(250,204,21,.08)', border: `1.5px dashed ${YELLOW}` }}
+            style={{ background: 'rgba(212,162,76,.08)', border: `1.5px dashed ${YELLOW}` }}
           >
             <p className="m-0 text-[14px] font-extrabold text-white">
               Pass khatam hone wala hai · 1 Year sirf <span style={{ color: YELLOW }}>₹{yearlyPrice}</span>

@@ -38,7 +38,7 @@ function Motif({ art }: { art: Art }): ReactNode {
     case 'sun':
       return (
         <>
-          <circle cx="50" cy="62" r="26" fill="rgba(250,204,21,.55)" />
+          <circle cx="50" cy="62" r="26" fill="rgba(212,162,76,.55)" />
           {[78, 86, 94].map((y) => <line key={y} x1="0" x2="100" y1={y} y2={y} {...s} />)}
         </>
       );
@@ -55,7 +55,7 @@ function Motif({ art }: { art: Art }): ReactNode {
         <path
           d="M0 110 V70 H12 V52 H24 V76 H34 V40 H48 V64 H58 V30 H70 V58 H80 V48 H92 V72 H100 V110Z"
           fill="rgba(0,0,0,.55)"
-          stroke="rgba(250,204,21,.4)"
+          stroke="rgba(212,162,76,.4)"
         />
       );
     case 'hills':
@@ -70,7 +70,7 @@ function Motif({ art }: { art: Art }): ReactNode {
       return (
         <>
           {[34, 26, 18, 10].map((r) => <circle key={r} cx="50" cy="50" r={r} {...s} />)}
-          <circle cx="50" cy="50" r="4" fill="rgba(250,204,21,.8)" />
+          <circle cx="50" cy="50" r="4" fill="rgba(212,162,76,.8)" />
         </>
       );
     case 'rays':
@@ -114,13 +114,13 @@ function PosterCard({ p }: { p: Poster }) {
       <svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
         <Motif art={p.art} />
       </svg>
-      <span className="absolute left-2 top-2 text-[13px] font-black leading-none" style={{ color: '#EF233C' }}>
-        U
+      <span className="absolute left-2 top-2 text-[13px] font-black leading-none" style={{ color: '#C8102E' }}>
+        K
       </span>
       {p.tag && (
         <span
           className="absolute right-0 top-2 px-1.5 py-0.5 text-[8px] font-extrabold tracking-wider"
-          style={{ background: '#EF233C', color: '#fff' }}
+          style={{ background: '#C8102E', color: '#fff' }}
         >
           {p.tag}
         </span>
@@ -129,7 +129,7 @@ function PosterCard({ p }: { p: Poster }) {
         className="absolute inset-x-0 bottom-0 px-2 pb-2 pt-8"
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,.9), transparent)' }}
       >
-        <div className="text-[9px] font-semibold tracking-[.2em] text-white/60">ULLU PLAY</div>
+        <div className="text-[9px] font-semibold tracking-[.2em] text-white/60">KAMA OTT</div>
         <div className="text-[15px] font-extrabold leading-tight text-white">{p.title}</div>
         <div className="mt-0.5 text-[9px] font-medium text-white/60">{p.genre}</div>
       </div>
@@ -141,7 +141,7 @@ const COLUMNS = 16;
 
 export default function PosterBackdrop({ dim = 0 }: { dim?: number }) {
   return (
-    <div className="fixed inset-0 overflow-hidden" aria-hidden style={{ background: '#0C0809' }}>
+    <div className="fixed inset-0 overflow-hidden" aria-hidden style={{ background: '#0B0507' }}>
       <style>{`
         @keyframes kpUp   { from { transform: translateY(0); }    to { transform: translateY(-50%); } }
         @keyframes kpDown { from { transform: translateY(-50%); } to { transform: translateY(0); } }
@@ -178,9 +178,9 @@ export default function PosterBackdrop({ dim = 0 }: { dim?: number }) {
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 70% 65% at 50% 50%, rgba(12,8,9,.68) 0%, rgba(12,8,9,.88) 100%),
-            linear-gradient(to bottom, rgba(12,8,9,.6), transparent 25%, transparent 75%, rgba(12,8,9,.85)),
-            rgba(12,8,9,${dim})`,
+          background: `radial-gradient(ellipse 70% 65% at 50% 50%, rgba(11,5,7,.68) 0%, rgba(11,5,7,.88) 100%),
+            linear-gradient(to bottom, rgba(11,5,7,.6), transparent 25%, transparent 75%, rgba(11,5,7,.85)),
+            rgba(11,5,7,${dim})`,
         }}
       />
     </div>
