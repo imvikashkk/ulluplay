@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { YELLOW } from './AuthShell';
 
-// Mobile number → OTP / subscription — shared by every landing variant so only the layout differs
+// Mobile number → OTP / subscription
 export default function MobileLoginForm({ className = '', cta = 'Watch Now' }: { className?: string; cta?: string }) {
   const router = useRouter();
   const [mobile, setMobile] = useState('');
