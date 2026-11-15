@@ -44,16 +44,6 @@ function ensureFbCookies(fbclid: string | null) {
   }
 }
 
-// TEMP: Meta ad id → pixel slug, for ads running without ?c= in their URL
-const AD_SLUG_MAP: Record<string, { slug: string; campaignName?: string }> = {
-  '120248366307600144': { slug: 'ullu', campaignName: 'zenz-cp2' },
-};
-
-// TEMP: Meta campaign id (utm_id) → pixel slug, for any other ad in the campaign without ?c= (ad map wins)
-const CAMPAIGN_SLUG_MAP: Record<string, { slug: string; campaignName?: string }> = {
-  '120248347529370144': { slug: 'ullu', campaignName: 'zenz-cp2' }, // zenz-cp2
-};
-
 export default function CampaignTracker() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,34 +53,39 @@ export default function CampaignTracker() {
     }
 
     const isResolved = (v: string) => !v.includes('{{');
-    // TEMP fallback: Meta auto-appends utm_id (= campaign id) to every ad click, even when the ad's URL has no ?c=
-    const utmId = params.get('utm_id');
+    const num = (v: string | null) => (v && /^\d+$/.test(v) ? v : null);
+
+    // Meta auto-appends utm_* to every ad click, even when the ad's own URL has no ?c=:
+    // utm_id = campaign id, utm_content = ad id
     const fromMetaAd = !!params.get('fbclid') || /^(ig|fb|an|msg|facebook|instagram)$/i.test(params.get('utm_source') ?? '');
-    const metaCampaignId   = params.get('meta_campaign_id') || (fromMetaAd && utmId && /^\d+$/.test(utmId) ? utmId : null);
-    const adMap = AD_SLUG_MAP[params.get('utm_content') ?? ''] ?? (fromMetaAd ? CAMPAIGN_SLUG_MAP[utmId ?? ''] : undefined);
-    const metaCampaignName = params.get('meta_campaign_name') || (fromMetaAd ? adMap?.campaignName ?? null : null);
+    const metaCampaignId   = params.get('meta_campaign_id') || (fromMetaAd ? num(params.get('utm_id')) : null);
+    const metaCampaignName = params.get('meta_campaign_name');
     if (metaCampaignId   && isResolved(metaCampaignId))   localStorage.setItem('mr_meta_campaign_id',   metaCampaignId);
     if (metaCampaignName && isResolved(metaCampaignName)) localStorage.setItem('mr_meta_campaign_name', metaCampaignName);
 
     // Save the ad click (fbclid) even without a slug, so CAPI can still match the purchase
     ensureFbCookies(params.get('fbclid'));
 
-    // TEMP: ads whose URL is missing ?c= → pin them to the right pixel by Meta ad id (utm_content)
-    const adSlug = adMap?.slug;
-    if (!slug && adSlug) localStorage.setItem('mr_campaign', adSlug);
+    // No ?c= on a Meta ad click → resolve the pixel from admin "Ad Mapping" (ad id → campaign id → history)
+    const adId   = fromMetaAd ? num(params.get('utm_content')) ?? '' : '';
+    const campId = metaCampaignId && isResolved(metaCampaignId) ? metaCampaignId : '';
+    const resolveFromAd = !slug && fromMetaAd && !!(adId || campId);
 
-    const campaignSlug = slug || adSlug || localStorage.getItem('mr_campaign') || '';
-    const fallbackCid  = !campaignSlug && metaCampaignId && isResolved(metaCampaignId) ? metaCampaignId : '';
-    if (!campaignSlug && !fallbackCid) return;
+    const campaignSlug = slug || localStorage.getItem('mr_campaign') || '';
+    if (!campaignSlug && !resolveFromAd) return;
 
     loadPixelBase();
 
-    const query = campaignSlug ? `c=${encodeURIComponent(campaignSlug)}` : `cid=${encodeURIComponent(fallbackCid)}`;
+    const query = resolveFromAd
+      ? new URLSearchParams({ ...(adId && { ad: adId }), ...(campId && { cid: campId }) }).toString()
+      : `c=${encodeURIComponent(campaignSlug)}`;
     fetch(`/api/pixel-config?${query}`)
       .then((r) => r.json())
-      .then(({ pixelId, slug: resolved }: { pixelId: string | null; slug?: string | null }) => {
-        // Fallback found a slug → store it so the lead + payment get attributed and CAPI fires
-        if (!campaignSlug && resolved && !localStorage.getItem('mr_campaign')) localStorage.setItem('mr_campaign', resolved);
+      .then(({ pixelId, slug: resolved, campaignName }: { pixelId: string | null; slug?: string | null; campaignName?: string | null }) => {
+        if (resolveFromAd && resolved) {
+          localStorage.setItem('mr_campaign', resolved);
+          if (campaignName && !metaCampaignName) localStorage.setItem('mr_meta_campaign_name', campaignName);
+        }
         if (!pixelId) return;
         // Only init once per session — fbq queues events until init, so re-init causes duplicate sends
         const w = window as Window & { __mr_pixel_inited?: string };

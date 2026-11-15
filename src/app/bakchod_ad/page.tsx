@@ -14,7 +14,7 @@ async function adminLogout() {
 }
 
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
-type AdminTab = 'payments' | 'subscriptions' | 'marketing' | 'mediaBuyers' | 'landing';
+type AdminTab = 'payments' | 'subscriptions' | 'marketing' | 'adMappings' | 'mediaBuyers' | 'landing';
 type MarketingTab = 'overview' | 'campaigns';
 
 /* ── Types ─────────────────────────────────────────────── */
@@ -1561,10 +1561,206 @@ function LandingAbPanel() {
   );
 }
 
+/* ── Ad Mapping Panel (ads whose URL has no ?c=) ─────────── */
+interface AdMapping {
+  id: number; match_type: 'ad' | 'campaign'; meta_id: string; slug: string;
+  campaign_name: string | null; note: string | null; is_active: boolean; created_at: string;
+  pixel_label: string | null; pixel_id: string | null; conversions: number | null;
+}
+type MappingForm = { match_type: 'ad' | 'campaign'; meta_id: string; slug: string; campaign_name: string; note: string; is_active: boolean };
+const EMPTY_MAPPING: MappingForm = { match_type: 'ad', meta_id: '', slug: '', campaign_name: '', note: '', is_active: true };
+
+function AdMappingsPanel() {
+  const [rows, setRows]       = useState<AdMapping[]>([]);
+  const [pixels, setPixels]   = useState<{ slug: string; label: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm]       = useState<MappingForm | null>(null);
+  const [editId, setEditId]   = useState<number | null>(null);
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState('');
+  const [delConfirm, setDelConfirm] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch('/api/admin/ad-mappings');
+    if (res.status === 401) { adminLogout(); return; }
+    const json = await res.json();
+    if (json.success) { setRows(json.data); setPixels(json.pixels); }
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const set = <K extends keyof MappingForm>(k: K, v: MappingForm[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
+
+  async function save() {
+    if (!form) return;
+    setSaving(true); setError('');
+    const res = await fetch(editId ? `/api/admin/ad-mappings/${editId}` : '/api/admin/ad-mappings', {
+      method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form),
+    });
+    const json = await res.json();
+    setSaving(false);
+    if (!json.success) { setError(json.message ?? 'Save failed'); return; }
+    setForm(null); setEditId(null); load();
+  }
+
+  async function toggle(m: AdMapping) {
+    await fetch(`/api/admin/ad-mappings/${m.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...m, campaign_name: m.campaign_name ?? '', note: m.note ?? '', is_active: !m.is_active }),
+    });
+    load();
+  }
+
+  async function remove(id: number) {
+    await fetch(`/api/admin/ad-mappings/${id}`, { method: 'DELETE' });
+    setDelConfirm(null); load();
+  }
+
+  const canSave = !!form && /^\d{5,30}$/.test(form.meta_id) && !!form.slug;
+
+  return (
+    <div className="fu">
+      <div className="rounded-[10px] px-4 py-3 mb-4 text-[12px] leading-relaxed text-stone-600" style={{ background: BLUE_LT, border: `1px solid ${BLUE_MD}` }}>
+        Jis ad ke URL mein <b>?c=</b> nahi laga, uska pixel yahan se set karo — ad edit karke review mein bhejne ki zaroorat nahi.
+        Meta har click ke URL mein <b>utm_content</b> (Ad ID) aur <b>utm_id</b> (Campaign ID) khud jodta hai.
+        <span className="block mt-1 text-stone-500">Order: URL ka <b>?c=</b> → Ad ID mapping → Campaign ID mapping → campaign ka purana slug → default pixel.</span>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        {!form && (
+          <button onClick={() => { setForm({ ...EMPTY_MAPPING, slug: pixels[0]?.slug ?? '' }); setEditId(null); setError(''); }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] text-[12px] font-bold text-white transition-all hover:opacity-90"
+            style={{ background: BLUE }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            Add mapping
+          </button>
+        )}
+      </div>
+
+      {form && (
+        <div className="rounded-[10px] p-5 mb-4" style={{ ...card, background: '#FAF8F4' }}>
+          <p className="text-[13px] font-bold text-stone-800 mb-4">{editId ? 'Edit mapping' : 'Add mapping'}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+            <div>
+              <label className={labelCls}>Type</label>
+              <select value={form.match_type} onChange={(e) => set('match_type', e.target.value as MappingForm['match_type'])}
+                className={inputCls} style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="ad">Ad ID (utm_content)</option>
+                <option value="campaign">Campaign ID (utm_id)</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>{form.match_type === 'ad' ? 'Meta Ad ID' : 'Meta Campaign ID'}</label>
+              <input value={form.meta_id} onChange={(e) => set('meta_id', e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 120248366307600144" inputMode="numeric" className={inputCls + ' font-mono'} style={inputStyle} />
+            </div>
+            <div>
+              <label className={labelCls}>Pixel (slug)</label>
+              <select value={form.slug} onChange={(e) => set('slug', e.target.value)}
+                className={inputCls} style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="" disabled>— select pixel —</option>
+                {pixels.map((p) => <option key={p.slug} value={p.slug}>{p.slug} — {p.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Campaign name (optional)</label>
+              <input value={form.campaign_name} onChange={(e) => set('campaign_name', e.target.value)}
+                placeholder="payments mein yahi naam save hoga" className={inputCls} style={inputStyle} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Note (optional)</label>
+              <input value={form.note} onChange={(e) => set('note', e.target.value)}
+                placeholder="e.g. URL mein c= nahi hai, ad review se bachane ke liye" className={inputCls} style={inputStyle} />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-[12px] text-stone-600 mb-4 cursor-pointer w-fit">
+            <input type="checkbox" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active
+          </label>
+          {error && <p className="text-[12px] text-red-600 mb-3">{error}</p>}
+          <div className="flex items-center gap-2">
+            <button onClick={save} disabled={saving || !canSave}
+              className="px-4 py-2 rounded-[8px] text-[12px] font-bold text-white transition-all disabled:opacity-40" style={{ background: BLUE }}>
+              {saving ? 'Saving…' : 'Save mapping'}
+            </button>
+            <button onClick={() => { setForm(null); setEditId(null); }}
+              className="px-4 py-2 rounded-[8px] text-[12px] font-semibold text-stone-500 hover:bg-stone-100 transition-colors"
+              style={{ background: '#F1EDE6', border: '1px solid #E6E0D6' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-[10px] overflow-hidden" style={card}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr style={{ background: '#FAF8F4', borderBottom: '1px solid #EDE8E0' }}>
+                {['Type', 'Meta ID', 'Pixel', 'Campaign name', 'Note', 'Conversions', 'Status', ''].map((h) => (
+                  <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-stone-400 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-[13px] text-stone-400">Loading…</td></tr>
+              ) : rows.length === 0 ? (
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-[13px] text-stone-400">Koi mapping nahi — &quot;Add mapping&quot; se banao</td></tr>
+              ) : rows.map((m) => (
+                <tr key={m.id} style={{ borderBottom: '1px solid #F3EFE8', opacity: m.is_active ? 1 : 0.5 }}>
+                  <td className="px-5 py-3.5">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                      style={m.match_type === 'ad' ? { background: '#EFF6FF', color: '#1D4ED8' } : { background: '#F5F3FF', color: '#7C3AED' }}>
+                      {m.match_type === 'ad' ? 'Ad ID' : 'Campaign ID'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-[11px] font-mono text-stone-700 select-all whitespace-nowrap">{m.meta_id}</td>
+                  <td className="px-5 py-3.5">
+                    <span className="text-[12px] font-bold text-stone-800">{m.slug}</span>
+                    {m.pixel_label && <span className="block text-[10px] text-stone-400">{m.pixel_label}</span>}
+                  </td>
+                  <td className="px-5 py-3.5 text-[12px] text-stone-600">{m.campaign_name ?? <span className="text-stone-300">—</span>}</td>
+                  <td className="px-5 py-3.5 text-[11px] text-stone-500 max-w-[240px]">{m.note ?? <span className="text-stone-300">—</span>}</td>
+                  <td className="px-5 py-3.5 text-[12px] font-bold text-stone-800">{m.conversions ?? <span className="text-stone-300 font-normal">—</span>}</td>
+                  <td className="px-5 py-3.5">
+                    <button onClick={() => toggle(m)}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                      style={m.is_active ? { background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0' } : { background: '#FAF8F4', color: '#776D62', border: '1px solid #E6E0D6' }}>
+                      {m.is_active ? 'Active' : 'Paused'}
+                    </button>
+                  </td>
+                  <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                    {delConfirm === m.id ? (
+                      <span className="inline-flex items-center gap-2">
+                        <button onClick={() => remove(m.id)} className="text-[11px] font-bold text-red-600">Delete?</button>
+                        <button onClick={() => setDelConfirm(null)} className="text-[11px] font-semibold text-stone-400">Cancel</button>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-3">
+                        <button onClick={() => {
+                          setForm({ match_type: m.match_type, meta_id: m.meta_id, slug: m.slug, campaign_name: m.campaign_name ?? '', note: m.note ?? '', is_active: m.is_active });
+                          setEditId(m.id); setError('');
+                        }} className="text-[11px] font-semibold text-stone-500 hover:text-stone-800">Edit</button>
+                        <button onClick={() => setDelConfirm(m.id)} className="text-[11px] font-semibold text-red-400 hover:text-red-600">Delete</button>
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ADMIN_NAV: { key: AdminTab; label: string; icon: string }[] = [
             { key: 'payments',    label: 'Payments',    icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
             { key: 'subscriptions', label: 'Subscriptions', icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z' },
             { key: 'marketing',   label: 'Marketing',   icon: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' },
+            { key: 'adMappings',  label: 'Ad Mapping',  icon: 'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71' },
             { key: 'mediaBuyers', label: 'Media Buyers', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
             { key: 'landing',     label: 'Landing A/B', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2' },
 ];
@@ -1573,6 +1769,7 @@ const ADMIN_TITLES: Record<AdminTab, [string, string]> = {
   payments:      ['Payments', 'Har payment — status, campaign aur source ke saath.'],
   subscriptions: ['Subscriptions', 'Kiske paas access hai, kab tak — aur kisi ko bhi free access do.'],
   marketing:     ['Marketing', 'Pixels, attribution aur conversion analytics.'],
+  adMappings:    ['Ad Mapping', 'Bina ?c= wale ads ko Ad ID / Campaign ID se sahi pixel par bhejo.'],
   mediaBuyers:   ['Media Buyers', 'Media buyers jo pixels aur campaigns chalate hain.'],
   landing:       ['Landing A/B', 'Do landing designs, traffic split aur kaunsa zyada convert karta hai.'],
 };
@@ -1914,6 +2111,11 @@ export default function AdminDashboard() {
           <div className="fu">
             <MarketingPanel />
           </div>
+        )}
+
+        {/* ── AD MAPPING TAB ── */}
+        {adminTab === 'adMappings' && (
+          <AdMappingsPanel />
         )}
 
         {/* ── MEDIABUYER TAB ── */}
