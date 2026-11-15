@@ -178,3 +178,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS lp_run     INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lp_variant CHAR(1);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lp_at      TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_users_lp_run ON users(lp_run) WHERE lp_run IS NOT NULL;
+
+-- ── fbc/fbp can exceed 200 chars ─────────────────────────────────
+-- fbc = "fb.1.<ms>.<fbclid>" — Meta's fbclid regularly pushes it past 200 chars,
+-- which made the payments INSERT fail with "value too long". varchar → text is metadata-only (no rewrite).
+ALTER TABLE payments           ALTER COLUMN fbc TYPE TEXT, ALTER COLUMN fbp TYPE TEXT;
+ALTER TABLE phone_attributions ALTER COLUMN fbc TYPE TEXT, ALTER COLUMN fbp TYPE TEXT;

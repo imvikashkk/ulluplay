@@ -51,17 +51,19 @@ export async function POST(req: NextRequest) {
     const plan = planRes.rows[0];
     const user = userRes.rows[0];
 
-    // Fallback to stored first-touch attribution if current session has no campaign
-    if (!campaignSlug && user.mobile) {
+    // Fallback to stored attribution if this session has no campaign or no ad click cookies
+    if ((!campaignSlug || !fbc || !fbp) && user.mobile) {
       const attrRes = await pool.query(
         `SELECT campaign_slug, meta_campaign_id, meta_campaign_name, fbp, fbc FROM phone_attributions WHERE mobile = $1`,
         [user.mobile],
       );
       if (attrRes.rows.length > 0) {
         const attr = attrRes.rows[0];
-        campaignSlug = attr.campaign_slug || campaignSlug;
-        metaCampaignId = attr.meta_campaign_id || metaCampaignId;
-        metaCampaignName = attr.meta_campaign_name || metaCampaignName;
+        if (!campaignSlug) {
+          campaignSlug = attr.campaign_slug || campaignSlug;
+          metaCampaignId = attr.meta_campaign_id || metaCampaignId;
+          metaCampaignName = attr.meta_campaign_name || metaCampaignName;
+        }
         if (!fbp && attr.fbp) fbp = attr.fbp;
         if (!fbc && attr.fbc) fbc = attr.fbc;
       }

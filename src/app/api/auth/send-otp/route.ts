@@ -27,8 +27,11 @@ export async function POST(req: NextRequest) {
     const fbp = req.cookies.get('_fbp')?.value || bodyFbp || '';
     const fbc = req.cookies.get('_fbc')?.value || bodyFbc || '';
 
-    // Save first-touch attribution (campaign + fbp/fbc) — only if not unresolved Meta template
-    if (campaignSlug && !campaignSlug.includes('{{')) {
+    // Save attribution (campaign + fbp/fbc). Also when there's no slug but we have an ad click,
+    // so a later payment (other tab / browser) can still send fbc to Meta.
+    const slugOk = !!campaignSlug && !campaignSlug.includes('{{');
+    const cidOk  = !!metaCampaignId && !metaCampaignId.includes('{{');
+    if (slugOk || fbc || cidOk) {
       try {
         await pool.query(
           `INSERT INTO phone_attributions (mobile, campaign_slug, meta_campaign_id, meta_campaign_name, fbp, fbc)
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest) {
              fbc                = EXCLUDED.fbc`,
           [
             mobile,
-            campaignSlug,
+            slugOk ? campaignSlug : null,
             metaCampaignId && !metaCampaignId.includes('{{')
               ? metaCampaignId
               : null,
