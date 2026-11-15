@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Meta adds these to every ad click; used as a fallback when the ad URL has no ?c=
+const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_id', 'utm_campaign', 'utm_content', 'utm_term'];
+
 const PUBLIC = ['/auth', '/api', '/payment', '/subscription', '/bakchod_mb', '/privacy', '/terms', '/support'];
 
 export function proxy(req: NextRequest) {
@@ -38,6 +41,7 @@ export function proxy(req: NextRequest) {
     if (sp.get('meta_campaign_id'))   authUrl.searchParams.set('meta_campaign_id',   sp.get('meta_campaign_id')!);
     if (sp.get('meta_campaign_name')) authUrl.searchParams.set('meta_campaign_name', sp.get('meta_campaign_name')!);
     if (sp.get('fbclid'))             authUrl.searchParams.set('fbclid',             sp.get('fbclid')!);
+    for (const k of UTM_KEYS) if (sp.get(k)) authUrl.searchParams.set(k, sp.get(k)!);
     return NextResponse.redirect(authUrl);
   }
 
@@ -53,6 +57,7 @@ export function proxy(req: NextRequest) {
     if (sp.get('meta_campaign_id'))   subUrl.searchParams.set('meta_campaign_id',   sp.get('meta_campaign_id')!);
     if (sp.get('meta_campaign_name')) subUrl.searchParams.set('meta_campaign_name', sp.get('meta_campaign_name')!);
     if (sp.get('fbclid'))             subUrl.searchParams.set('fbclid',             sp.get('fbclid')!);
+    for (const k of UTM_KEYS) if (sp.get(k)) subUrl.searchParams.set(k, sp.get(k)!);
     return NextResponse.redirect(subUrl);
   }
 

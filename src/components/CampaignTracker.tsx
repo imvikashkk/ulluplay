@@ -52,21 +52,30 @@ export default function CampaignTracker() {
       localStorage.setItem('mr_campaign', slug);
     }
 
-    const metaCampaignId   = params.get('meta_campaign_id');
-    const metaCampaignName = params.get('meta_campaign_name');
     const isResolved = (v: string) => !v.includes('{{');
+    // TEMP fallback: Meta auto-appends utm_id (= campaign id) to every ad click, even when the ad's URL has no ?c=
+    const utmId = params.get('utm_id');
+    const fromMetaAd = !!params.get('fbclid') || /^(ig|fb|an|msg|facebook|instagram)$/i.test(params.get('utm_source') ?? '');
+    const metaCampaignId   = params.get('meta_campaign_id') || (fromMetaAd && utmId && /^\d+$/.test(utmId) ? utmId : null);
+    const metaCampaignName = params.get('meta_campaign_name');
     if (metaCampaignId   && isResolved(metaCampaignId))   localStorage.setItem('mr_meta_campaign_id',   metaCampaignId);
     if (metaCampaignName && isResolved(metaCampaignName)) localStorage.setItem('mr_meta_campaign_name', metaCampaignName);
 
-    const campaignSlug = slug || localStorage.getItem('mr_campaign') || '';
-    if (!campaignSlug) return;
-
+    // Save the ad click (fbclid) even without a slug, so CAPI can still match the purchase
     ensureFbCookies(params.get('fbclid'));
+
+    const campaignSlug = slug || localStorage.getItem('mr_campaign') || '';
+    const fallbackCid  = !campaignSlug && metaCampaignId && isResolved(metaCampaignId) ? metaCampaignId : '';
+    if (!campaignSlug && !fallbackCid) return;
+
     loadPixelBase();
 
-    fetch(`/api/pixel-config?c=${encodeURIComponent(campaignSlug)}`)
+    const query = campaignSlug ? `c=${encodeURIComponent(campaignSlug)}` : `cid=${encodeURIComponent(fallbackCid)}`;
+    fetch(`/api/pixel-config?${query}`)
       .then((r) => r.json())
-      .then(({ pixelId }: { pixelId: string | null }) => {
+      .then(({ pixelId, slug: resolved }: { pixelId: string | null; slug?: string | null }) => {
+        // Fallback found a slug → store it so the lead + payment get attributed and CAPI fires
+        if (!campaignSlug && resolved && !localStorage.getItem('mr_campaign')) localStorage.setItem('mr_campaign', resolved);
         if (!pixelId) return;
         // Only init once per session — fbq queues events until init, so re-init causes duplicate sends
         const w = window as Window & { __mr_pixel_inited?: string };
