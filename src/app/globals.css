@@ -25,42 +25,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ── Kama OTT site look (all pages except /auth, which carries its own styles) ── */
+/* ── Ullu Play site look (all pages except /auth, which carries its own styles) ── */
 .k-body {
   font-family: var(--font-poppins), var(--font-mukta), system-ui, sans-serif;
-  background: #0b0507;
-  color: #f6ecdd;
-}
-/* Soft crimson + gold light at the top of every page, so big dark areas feel warm, not flat */
-.k-body:not(.k-legacy) {
-  background:
-    radial-gradient(1200px 520px at 15% -10%, rgba(200, 16, 46, 0.16), transparent 60%),
-    radial-gradient(900px 420px at 95% -5%, rgba(212, 162, 76, 0.1), transparent 60%),
-    #0b0507;
-  background-attachment: fixed;
-}
-.k-display {
-  font-family: var(--font-bebas), 'Arial Narrow', sans-serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  line-height: 0.95;
-}
-/* Gold-foil text (wordmark, plan prices) */
-.k-gold {
-  background: linear-gradient(180deg, #ffe08a 0%, #f5b83d 50%, #c98a1e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-/* Admin / media-buyer panels keep the original look */
-.k-legacy.k-body {
   background: #0c0809;
   color: #f5efe6;
 }
-.k-legacy .k-display {
+.k-display {
   font-family: var(--font-anton), Impact, 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
   letter-spacing: 0.01em;
+  line-height: 0.95;
 }
 .k-hindi {
   font-family: var(--font-mukta), sans-serif;

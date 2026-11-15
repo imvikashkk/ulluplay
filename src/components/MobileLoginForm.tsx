@@ -165,7 +165,7 @@ export default function MobileLoginForm({ className = '', cta = 'Watch Now' }: {
         // Dim until a full number is in; still tappable so an incomplete number shakes the field
         style={{
           textShadow: '0 1px 3px rgba(0,0,0,.5)',
-          background: isValid ? undefined : 'rgba(200,16,46,.35)',
+          background: isValid ? undefined : 'rgba(239,35,60,.35)',
           filter: isValid ? undefined : 'saturate(.7)',
         }}
       >

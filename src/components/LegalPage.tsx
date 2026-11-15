@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { SiteFooter, SiteHeader } from './SiteChrome';
 import { INK, LINE, YELLOW } from '@/lib/brand';
 
-export const SUPPORT_EMAIL = 'support@kamaott.com';
-export const SITE_DOMAIN = 'kamaott.com';
+export const SUPPORT_EMAIL = 'support@ulluplay.com';
+export const SITE_DOMAIN = 'kaama.online';
 
 // Shared header for the public info pages (privacy / terms / support)
 export function SiteNav() {
@@ -16,7 +16,7 @@ export function SiteNav() {
             ['Terms', '/terms'],
             ['Support', '/support'],
           ].map(([t, href]) => (
-            <Link key={t} href={href} className="px-2 py-1.5 text-white/60 hover:text-[#D4A24C] no-underline transition-colors">
+            <Link key={t} href={href} className="px-2 py-1.5 text-white/60 hover:text-[#FACC15] no-underline transition-colors">
               {t}
             </Link>
           ))}

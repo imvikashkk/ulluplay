@@ -1656,7 +1656,7 @@ export default function AdminDashboard() {
       onNav={setAdminTab}
       title={ADMIN_TITLES[adminTab][0]}
       subtitle={ADMIN_TITLES[adminTab][1]}
-      account={<PanelAccount name="Admin" detail="Kama OTT" onLogout={handleLogout} confirm={logoutConfirm} onConfirmChange={setLogoutConfirm} />}
+      account={<PanelAccount name="Admin" detail="Ullu Play" onLogout={handleLogout} confirm={logoutConfirm} onConfirmChange={setLogoutConfirm} />}
     >
         {/* ── PAYMENTS TAB ── */}
         {adminTab === 'payments' && (

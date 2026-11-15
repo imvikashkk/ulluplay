@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import LegalPage, { SUPPORT_EMAIL } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions | Kama OTT',
+  title: 'Terms & Conditions | Ullu Play',
 };
 
 export default function TermsPage() {
@@ -12,9 +12,9 @@ export default function TermsPage() {
       updated="17 March 2026"
       intro={
         <p className="m-0">
-          Welcome to Kama OTT, the streaming service at kamaott.com. The rules below apply whenever you sign up,
+          Welcome to Ullu Play, the streaming service at kaama.online. The rules below apply whenever you sign up,
           buy a pass or simply browse the site. Using the service means you accept them — if any part doesn&apos;t work
-          for you, please don&apos;t use Kama OTT.
+          for you, please don&apos;t use Ullu Play.
         </p>
       }
       sections={[
@@ -22,7 +22,7 @@ export default function TermsPage() {
           heading: 'Adults only',
           body: (
             <p className="m-0">
-              Everything on Kama OTT is made for an adult audience. You need to be 18 or older to sign up or to watch
+              Everything on Ullu Play is made for an adult audience. You need to be 18 or older to sign up or to watch
               anything here. When you use the service you are confirming both your age and that watching this kind of
               content is allowed under the laws that apply to you.
             </p>
@@ -83,7 +83,7 @@ export default function TermsPage() {
           heading: 'Ownership of content',
           body: (
             <p className="m-0">
-              The films, artwork, text and branding you see here are owned by Kama OTT or by the partners who license
+              The films, artwork, text and branding you see here are owned by Ullu Play or by the partners who license
               them to us, and copyright and related laws protect them.
             </p>
           ),
@@ -102,7 +102,7 @@ export default function TermsPage() {
           heading: 'Our liability',
           body: (
             <p className="m-0">
-              Kama OTT is offered on an &quot;as is&quot; basis. As far as the law allows, the most we will be liable for
+              Ullu Play is offered on an &quot;as is&quot; basis. As far as the law allows, the most we will be liable for
               in connection with the service is the price you paid for the pass you currently hold.
             </p>
           ),
@@ -120,7 +120,7 @@ export default function TermsPage() {
           body: (
             <p className="m-0">
               These Terms may be revised now and then; the date at the top tells you when that last happened. If you
-              keep using Kama OTT after a revision, you are agreeing to the updated version.
+              keep using Ullu Play after a revision, you are agreeing to the updated version.
             </p>
           ),
         },

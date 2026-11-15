@@ -36,7 +36,7 @@ export default function AdminAuthPage() {
   };
 
   return (
-    <PanelLoginFrame role="Admin" title="Admin login" subtitle="Kama OTT — sirf authorised logon ke liye">
+    <PanelLoginFrame role="Admin" title="Admin login" subtitle="Ullu Play — sirf authorised logon ke liye">
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-[11px] font-semibold uppercase tracking-[.16em] text-white/45 mb-1.5">Username</label>

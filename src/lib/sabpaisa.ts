@@ -73,7 +73,7 @@ export async function createSabpaisaOrder(
       currency: 'INR',
       // Users only sign up with a mobile number — derive name/email
       customerName: 'User',
-      customerEmail: `${mobile || customer.userId}@kamaott.com`,
+      customerEmail: `${mobile || customer.userId}@kaama.online`,
       customerPhone: mobile,
       returnUrl: `${appUrl}/api/payment/callback`,
       udf1: String(customer.userId),

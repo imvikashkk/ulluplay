@@ -34,7 +34,7 @@ export default function MBLoginPage() {
   };
 
   return (
-    <PanelLoginFrame role="Media Buyer" title="Partner login" subtitle="Kama OTT · Campaign dashboard">
+    <PanelLoginFrame role="Media Buyer" title="Partner login" subtitle="Ullu Play · Campaign dashboard">
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-[11px] font-semibold uppercase tracking-[.16em] text-white/45 mb-1.5">Email</label>

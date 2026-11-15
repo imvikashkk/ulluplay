@@ -69,7 +69,7 @@ function PlayerPage({
           )}
         </div>
         {item.genre && (
-          <span className="hidden sm:inline text-[11px] font-semibold px-2 py-1 rounded-sm" style={{ border: `1px solid ${LINE}`, color: 'rgba(246,236,221,.6)' }}>
+          <span className="hidden sm:inline text-[11px] font-semibold px-2 py-1 rounded-sm" style={{ border: `1px solid ${LINE}`, color: 'rgba(245,239,230,.6)' }}>
             {item.genre}
           </span>
         )}
@@ -118,7 +118,7 @@ function DetailsDrawer({ item, onClose, onPlay }: { item: Title; onClose: () => 
         .k-drawer { animation: kSheetIn .35s cubic-bezier(.22,1,.36,1) both; }
         @media (min-width: 768px) { .k-drawer { animation-name: kDrawerIn; } }
       `}</style>
-      <div className="absolute inset-0" style={{ background: 'rgba(11,5,7,.75)' }} />
+      <div className="absolute inset-0" style={{ background: 'rgba(12,8,9,.75)' }} />
       <aside
         className="k-drawer k-body relative w-full md:w-[460px] max-h-[88dvh] md:max-h-none overflow-y-auto rounded-t-xl md:rounded-none"
         style={{ background: PANEL, borderLeft: `1px solid ${LINE}`, borderTop: `3px solid ${YELLOW}` }}
@@ -305,7 +305,7 @@ function Spotlight({ onPlay, onDetails }: { onPlay: (t: Title) => void; onDetail
                       outlineOffset: -1,
                     }}
                   >
-                    <span className="k-display text-[18px] w-7 shrink-0" style={{ color: on ? YELLOW : 'rgba(246,236,221,.3)' }}>
+                    <span className="k-display text-[18px] w-7 shrink-0" style={{ color: on ? YELLOW : 'rgba(245,239,230,.3)' }}>
                       {pad(i + 1)}
                     </span>
                     <span className={`text-[13px] whitespace-nowrap truncate ${on ? 'text-white font-bold' : 'text-white/55 font-medium'}`}>
@@ -361,7 +361,7 @@ function PosterCard({ item, n, onOpen }: { item: Title; n: number; onOpen: (t: T
           </span>
         </span>
       </div>
-      <p className="k-display m-0 mt-2.5 text-[19px] md:text-[21px] text-white truncate group-hover:text-[#D4A24C] transition-colors">
+      <p className="k-display m-0 mt-2.5 text-[19px] md:text-[21px] text-white truncate group-hover:text-[#FACC15] transition-colors">
         {item.title}
       </p>
       <p className="m-0 mt-0.5 text-[11px] text-white/45 truncate">{[item.genre, item.year].filter(Boolean).join(' · ')}</p>
@@ -439,7 +439,7 @@ export default function LandingPage() {
                   className="shrink-0 h-9 px-4 rounded-full text-[13px] font-semibold cursor-pointer transition-colors"
                   style={{
                     background: on ? YELLOW : 'transparent',
-                    color: on ? INK : 'rgba(246,236,221,.7)',
+                    color: on ? INK : 'rgba(245,239,230,.7)',
                     border: `1px solid ${on ? YELLOW : LINE}`,
                   }}
                 >

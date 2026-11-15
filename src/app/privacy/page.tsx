@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import LegalPage, { SUPPORT_EMAIL } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Kama OTT',
+  title: 'Privacy Policy | Ullu Play',
 };
 
 export default function PrivacyPage() {
@@ -12,8 +12,8 @@ export default function PrivacyPage() {
       updated="17 March 2026"
       intro={
         <p className="m-0">
-          Your privacy matters to us. This page sets out, in plain words, what Kama OTT (kamaott.com) learns about
-          you while you use the site, why we need it and what control you have over it. By using Kama OTT you
+          Your privacy matters to us. This page sets out, in plain words, what Ullu Play (kaama.online) learns about
+          you while you use the site, why we need it and what control you have over it. By using Ullu Play you
           agree to the practices described here.
         </p>
       }
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
           heading: 'Who else sees it',
           body: (
             <p className="m-0">
-              Your personal data is never sold. It is passed only to the companies that help us run Kama OTT — the
+              Your personal data is never sold. It is passed only to the companies that help us run Ullu Play — the
               payment gateway, SMS provider, hosting provider and ad partners — and to government authorities if the
               law requires it.
             </p>
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
           heading: 'Under-18s',
           body: (
             <p className="m-0">
-              Kama OTT is strictly for adults aged 18 and over, and we do not knowingly collect any information about
+              Ullu Play is strictly for adults aged 18 and over, and we do not knowingly collect any information about
               anyone younger.
             </p>
           ),
@@ -106,8 +106,8 @@ export default function PrivacyPage() {
           heading: 'Changes to this page',
           body: (
             <p className="m-0">
-              We may revise this policy from time to time; the date at the top shows the latest revision. Using Kama
-              OTT after a change means you accept the updated policy.
+              We may revise this policy from time to time; the date at the top shows the latest revision. Using Ullu
+              Play after a change means you accept the updated policy.
             </p>
           ),
         },
