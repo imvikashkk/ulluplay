@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { attributionVia, mappingIdOf } from '@/lib/attribution';
 import { generateUserToken } from '@/lib/userAuth';
 import { sendOtp } from '@/lib/meraOtp';
 import { isTestMobile, ensureTestSubscription } from '@/lib/testAccount';
@@ -15,6 +16,8 @@ export async function POST(req: NextRequest) {
       metaAdsetName = '',
       metaAdId = '',
       metaAdName = '',
+      attrVia = '',
+      adMappingId = '',
       fbp: bodyFbp = '',
       fbc: bodyFbc = '',
     } = await req.json();
@@ -41,8 +44,8 @@ export async function POST(req: NextRequest) {
       try {
         await pool.query(
           `INSERT INTO phone_attributions (mobile, campaign_slug, meta_campaign_id, meta_campaign_name,
-             meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, fbp, fbc)
-           VALUES ($1, $2, $3, $4, $7, $8, $9, $10, $5, $6)
+             meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, fbp, fbc, attribution_via, ad_mapping_id)
+           VALUES ($1, $2, $3, $4, $7, $8, $9, $10, $5, $6, $11, $12)
            ON CONFLICT (mobile) DO UPDATE SET
              campaign_slug      = EXCLUDED.campaign_slug,
              meta_campaign_id   = EXCLUDED.meta_campaign_id,
@@ -52,7 +55,9 @@ export async function POST(req: NextRequest) {
              meta_ad_id         = EXCLUDED.meta_ad_id,
              meta_ad_name       = EXCLUDED.meta_ad_name,
              fbp                = EXCLUDED.fbp,
-             fbc                = EXCLUDED.fbc`,
+             fbc                = EXCLUDED.fbc,
+             attribution_via    = EXCLUDED.attribution_via,
+             ad_mapping_id      = EXCLUDED.ad_mapping_id`,
           [
             mobile,
             slugOk ? campaignSlug : null,
@@ -68,6 +73,8 @@ export async function POST(req: NextRequest) {
             clean(metaAdsetName),
             clean(metaAdId),
             clean(metaAdName),
+            slugOk ? attributionVia(attrVia) : null,
+            slugOk ? mappingIdOf(adMappingId) : null,
           ],
         );
       } catch (attrErr) {

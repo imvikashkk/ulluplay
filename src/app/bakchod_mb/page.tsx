@@ -20,7 +20,7 @@ const STATUS_CFG: Record<string, { bg: string; color: string; border: string; la
 };
 
 interface Profile  { id: number; name: string; email: string | null }
-interface PayRow   { id: number; user_mobile: string; amount: number; status: string; campaign_slug: string | null; pixel_id: string | null; ad_account_id: string | null; meta_campaign_id: string | null; meta_campaign_name: string | null; meta_adset_id: string | null; meta_adset_name: string | null; meta_ad_id: string | null; meta_ad_name: string | null; created_at: string }
+interface PayRow   { id: number; user_mobile: string; amount: number; status: string; campaign_slug: string | null; pixel_id: string | null; ad_account_id: string | null; meta_campaign_id: string | null; meta_campaign_name: string | null; meta_adset_id: string | null; meta_adset_name: string | null; meta_ad_id: string | null; meta_ad_name: string | null; attribution_via: string | null; ad_mapping_id: number | null; created_at: string }
 interface PayStats { total: string; successful: string; pending: string; failed: string; revenue: string }
 interface MktOverview { total_purchases: string; capi_sent: string; capi_issues: string }
 interface PixelStat   { id: number; slug: string; label: string; pixel_id: string; ad_account_id: string | null; purchases: string; capi_sent: string; capi_issues: string }
@@ -51,6 +51,25 @@ function StatusBadge({ status }: { status: string }) {
     <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
       style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}` }}>
       {c.label}
+    </span>
+  );
+}
+
+/* Where the payment's pixel came from */
+const VIA_STYLE: Record<string, { label: string; bg: string; color: string; border: string; title: string }> = {
+  url:     { label: 'URL ?c=',  bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE', title: 'Ad URL mein ?c= tha' },
+  mapping: { label: 'Mapping',  bg: '#ECFDF5', color: '#047857', border: '#A7F3D0', title: 'Ad Mapping se pixel chuna gaya' },
+  history: { label: 'Auto',     bg: '#FFFBEB', color: '#B45309', border: '#FDE68A', title: 'Campaign ke purane data se pixel chuna gaya' },
+  default: { label: 'Default',  bg: '#FAF8F4', color: '#776D62', border: '#E6E0D6', title: 'Default pixel' },
+  manual:  { label: 'Manual',   bg: '#F5F3FF', color: '#7C3AED', border: '#DDD6FE', title: 'Haath se attribute kiya gaya' },
+};
+function ViaBadge({ via, mappingId }: { via: string | null; mappingId: number | null }) {
+  const v = via ? VIA_STYLE[via] : null;
+  if (!v) return null;
+  return (
+    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded inline-block w-fit whitespace-nowrap" title={v.title}
+      style={{ background: v.bg, color: v.color, border: `1px solid ${v.border}` }}>
+      {v.label}{via === 'mapping' && mappingId ? ` #${mappingId}` : ''}
     </span>
   );
 }
@@ -319,6 +338,7 @@ export default function MBDashboard() {
                             {row.campaign_slug ? (
                               <div className="flex flex-col gap-1">
                                 <span className="text-[10px] font-mono text-stone-500">?c={row.campaign_slug}</span>
+                                <ViaBadge via={row.attribution_via} mappingId={row.ad_mapping_id} />
                                 {row.pixel_id && <span className="text-[9px] font-mono text-stone-400">{row.pixel_id}</span>}
                                 {row.ad_account_id && (
                                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded inline-block w-fit" style={{ background: '#FFF7ED', color: '#C2410C', border: '1px solid #FED7AA' }}>{row.ad_account_id}</span>

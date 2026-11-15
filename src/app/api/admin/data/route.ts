@@ -131,7 +131,9 @@ export async function GET(req: NextRequest) {
            p.meta_adset_id,
            p.meta_adset_name,
            p.meta_ad_id,
-           p.meta_ad_name
+           p.meta_ad_name,
+           p.attribution_via,
+           p.ad_mapping_id
          FROM payments p
          JOIN users u ON u.id = p.user_id
          LEFT JOIN pixels px ON px.slug = p.campaign_slug

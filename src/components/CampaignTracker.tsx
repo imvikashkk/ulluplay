@@ -50,6 +50,8 @@ export default function CampaignTracker() {
     const slug = params.get('c');
     if (slug) {
       localStorage.setItem('mr_campaign', slug);
+      localStorage.setItem('mr_attr_via', 'url');
+      localStorage.removeItem('mr_ad_mapping_id');
     }
 
     const isResolved = (v: string) => !v.includes('{{');
@@ -93,11 +95,15 @@ export default function CampaignTracker() {
       : `c=${encodeURIComponent(campaignSlug)}`;
     fetch(`/api/pixel-config?${query}`)
       .then((r) => r.json())
-      .then((cfg: { pixelId: string | null; slug?: string | null; campaignName?: string | null; adsetName?: string | null; adName?: string | null;
+      .then((cfg: { pixelId: string | null; slug?: string | null; via?: string | null; mappingId?: number | null;
+                    campaignName?: string | null; adsetName?: string | null; adName?: string | null;
                     campaignId?: string | null; adsetId?: string | null; adId?: string | null }) => {
         const { pixelId } = cfg;
         if (resolveFromAd && cfg.slug) {
           localStorage.setItem('mr_campaign', cfg.slug);
+          localStorage.setItem('mr_attr_via', cfg.via ?? 'mapping');
+          if (cfg.mappingId) localStorage.setItem('mr_ad_mapping_id', String(cfg.mappingId));
+          else localStorage.removeItem('mr_ad_mapping_id');
           // Ad Mapping knows which adset / campaign the ad belongs to — fill what the URL didn't carry
           const fill: [string, string | null | undefined, string | null][] = [
             ['mr_meta_campaign_name', cfg.campaignName, metaCampaignName],

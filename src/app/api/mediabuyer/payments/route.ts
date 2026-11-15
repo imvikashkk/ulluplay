@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       pool.query(
         `SELECT p.id, u.mobile AS user_mobile, p.amount, p.status, p.campaign_slug,
                 p.meta_campaign_id, p.meta_campaign_name, p.meta_adset_id, p.meta_adset_name,
-                p.meta_ad_id, p.meta_ad_name, p.created_at,
+                p.meta_ad_id, p.meta_ad_name, p.attribution_via, p.ad_mapping_id, p.created_at,
                 px.pixel_id, px.ad_account_id
          FROM payments p
          JOIN pixels px ON px.slug = p.campaign_slug

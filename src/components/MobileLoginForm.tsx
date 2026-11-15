@@ -66,6 +66,8 @@ export default function MobileLoginForm({ className = '', cta = 'Watch Now' }: {
           metaAdsetName: localStorage.getItem('mr_meta_adset_name') ?? '',
           metaAdId: localStorage.getItem('mr_meta_ad_id') ?? '',
           metaAdName: localStorage.getItem('mr_meta_ad_name') ?? '',
+          attrVia: localStorage.getItem('mr_attr_via') ?? '',
+          adMappingId: localStorage.getItem('mr_ad_mapping_id') ?? '',
         }),
       });
       const data = await res.json();

@@ -31,7 +31,7 @@ interface PaymentRow {
   ad_account_id: string | null;
   meta_campaign_id: string | null;
   meta_campaign_name: string | null;
-  meta_adset_id: string | null; meta_adset_name: string | null; meta_ad_id: string | null; meta_ad_name: string | null;
+  meta_adset_id: string | null; meta_adset_name: string | null; meta_ad_id: string | null; meta_ad_name: string | null; attribution_via: string | null; ad_mapping_id: number | null;
 }
 
 interface Stats {
@@ -1376,7 +1376,7 @@ interface AdMapping {
   id: number; ad_id: string | null; adset_id: string | null; campaign_id: string | null; slug: string;
   campaign_name: string | null; adset_name: string | null; ad_name: string | null;
   note: string | null; is_active: boolean; created_at: string;
-  pixel_label: string | null; pixel_id: string | null; conversions: number;
+  pixel_label: string | null; pixel_id: string | null; conversions: number; via_mapping: number;
 }
 type MappingForm = {
   ad_id: string; adset_id: string; campaign_id: string; ad_name: string; adset_name: string; campaign_name: string;
@@ -1567,7 +1567,10 @@ function AdMappingsPanel() {
                       {m.pixel_label && <span className="block text-[10px] text-stone-400">{m.pixel_label}</span>}
                     </td>
                     <td className="px-5 py-3.5 text-[11px] text-stone-500 max-w-[220px]">{m.note ?? <span className="text-stone-300">—</span>}</td>
-                    <td className="px-5 py-3.5 text-[12px] font-bold text-stone-800">{m.conversions}</td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <span className="text-[12px] font-bold text-stone-800" title="Jinka pixel isi mapping ne chuna">{m.via_mapping} <span className="text-[10px] font-semibold text-emerald-700">via mapping</span></span>
+                      <span className="block text-[10px] text-stone-400" title="Is ID ke is pixel par kul conversions (URL ?c= wale bhi)">{m.conversions} total</span>
+                    </td>
                     <td className="px-5 py-3.5">
                       <button onClick={() => toggle(m)}
                         className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
@@ -1601,6 +1604,26 @@ function AdMappingsPanel() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+/* Where the payment's pixel came from */
+const VIA_STYLE: Record<string, { label: string; bg: string; color: string; border: string; title: string }> = {
+  url:     { label: 'URL ?c=',  bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE', title: 'Ad URL mein ?c= tha' },
+  mapping: { label: 'Mapping',  bg: '#ECFDF5', color: '#047857', border: '#A7F3D0', title: 'Ad Mapping se pixel chuna gaya' },
+  history: { label: 'Auto',     bg: '#FFFBEB', color: '#B45309', border: '#FDE68A', title: 'Campaign ke purane data se pixel chuna gaya' },
+  default: { label: 'Default',  bg: '#FAF8F4', color: '#776D62', border: '#E6E0D6', title: 'Default pixel' },
+  manual:  { label: 'Manual',   bg: '#F5F3FF', color: '#7C3AED', border: '#DDD6FE', title: 'Haath se attribute kiya gaya' },
+};
+function ViaBadge({ via, mappingId }: { via: string | null; mappingId: number | null }) {
+  const v = via ? VIA_STYLE[via] : null;
+  if (!v) return null;
+  return (
+    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded inline-block w-fit whitespace-nowrap" title={v.title}
+      style={{ background: v.bg, color: v.color, border: `1px solid ${v.border}` }}>
+      {v.label}{via === 'mapping' && mappingId ? ` #${mappingId}` : ''}
+    </span>
   );
 }
 
@@ -1870,6 +1893,7 @@ export default function AdminDashboard() {
                             {row.campaign_slug ? (
                               <div className="flex flex-col gap-1">
                                 <span className="text-[11px] font-mono font-semibold text-stone-700">{row.campaign_slug}</span>
+                                <ViaBadge via={row.attribution_via} mappingId={row.ad_mapping_id} />
                                 {row.pixel_id && (
                                   <span className="text-[9px] font-mono text-stone-400">Pixel: {row.pixel_id}</span>
                                 )}

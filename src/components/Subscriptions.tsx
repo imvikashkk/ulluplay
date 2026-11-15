@@ -177,7 +177,7 @@ export default function SubscriptionsPage() {
           localStorage.removeItem('mr_campaign');
           localStorage.removeItem('mr_meta_campaign_id');
           localStorage.removeItem('mr_meta_campaign_name');
-          ['mr_meta_adset_id', 'mr_meta_adset_name', 'mr_meta_ad_id', 'mr_meta_ad_name'].forEach((k) => localStorage.removeItem(k));
+          ['mr_meta_adset_id', 'mr_meta_adset_name', 'mr_meta_ad_id', 'mr_meta_ad_name', 'mr_attr_via', 'mr_ad_mapping_id'].forEach((k) => localStorage.removeItem(k));
           window.location.replace('/');
           return;
         }
@@ -245,6 +245,12 @@ export default function SubscriptionsPage() {
           campaignSlug: slug,
           metaCampaignId:   metaCampaignId   || null,
           metaCampaignName: metaCampaignName || null,
+          metaAdsetId:      localStorage.getItem('mr_meta_adset_id')   || null,
+          metaAdsetName:    localStorage.getItem('mr_meta_adset_name') || null,
+          metaAdId:         localStorage.getItem('mr_meta_ad_id')      || null,
+          metaAdName:       localStorage.getItem('mr_meta_ad_name')    || null,
+          attrVia:          localStorage.getItem('mr_attr_via')        || null,
+          adMappingId:      localStorage.getItem('mr_ad_mapping_id')   || null,
         }),
       });
       if (res.status === 401) {

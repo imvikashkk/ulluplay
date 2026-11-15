@@ -11,9 +11,10 @@ export interface ResolvedPixel {
   adsetId: string | null;
   adId: string | null;
   via: 'slug' | 'mapping' | 'history' | 'default' | null;
+  mappingId: number | null;
 }
 
-const NONE: ResolvedPixel = { pixelId: null, slug: null, campaignName: null, adsetName: null, adName: null, campaignId: null, adsetId: null, adId: null, via: null };
+const NONE: ResolvedPixel = { pixelId: null, slug: null, campaignName: null, adsetName: null, adName: null, campaignId: null, adsetId: null, adId: null, via: null, mappingId: null };
 const isMetaId = (v: string | null | undefined): v is string => !!v && /^\d{5,30}$/.test(v);
 
 /**
@@ -38,8 +39,8 @@ export async function resolvePixelFor({ slug, adId, adsetId, campaignId }: {
   if (!ad && !adset && !cid) return NONE;
 
   const r = await pool.query(
-    `SELECT slug, pixel_id, campaign_name, adset_name, ad_name, campaign_id, adset_id, ad_id, via FROM (
-       (SELECT px.slug, px.pixel_id, m.campaign_name, m.adset_name, m.ad_name, m.campaign_id, m.adset_id, m.ad_id, 'mapping' AS via,
+    `SELECT slug, pixel_id, campaign_name, adset_name, ad_name, campaign_id, adset_id, ad_id, via, mapping_id FROM (
+       (SELECT px.slug, px.pixel_id, m.campaign_name, m.adset_name, m.ad_name, m.campaign_id, m.adset_id, m.ad_id, 'mapping' AS via, m.id AS mapping_id,
                CASE WHEN m.ad_id IS NOT NULL THEN 1 WHEN m.adset_id IS NOT NULL THEN 2 ELSE 3 END AS prio
           FROM ad_slug_mappings m JOIN pixels px ON px.slug = m.slug
          WHERE m.is_active
@@ -48,14 +49,14 @@ export async function resolvePixelFor({ slug, adId, adsetId, campaignId }: {
                 OR (m.ad_id IS NULL AND m.adset_id IS NULL AND m.campaign_id = $3))
          ORDER BY prio, m.id DESC LIMIT 1)
        UNION ALL
-       (SELECT px.slug, px.pixel_id, NULL, NULL, NULL, NULL, NULL, NULL, 'history', 4
+       (SELECT px.slug, px.pixel_id, NULL, NULL, NULL, NULL, NULL, NULL, 'history', NULL, 4
           FROM (SELECT campaign_slug FROM payments           WHERE meta_campaign_id = $3 AND campaign_slug IS NOT NULL
                 UNION ALL
                 SELECT campaign_slug FROM phone_attributions WHERE meta_campaign_id = $3 AND campaign_slug IS NOT NULL) s
           JOIN pixels px ON px.slug = s.campaign_slug
          GROUP BY px.slug, px.pixel_id ORDER BY COUNT(*) DESC LIMIT 1)
        UNION ALL
-       (SELECT slug, pixel_id, NULL, NULL, NULL, NULL, NULL, NULL, 'default', 5 FROM pixels WHERE is_default LIMIT 1)
+       (SELECT slug, pixel_id, NULL, NULL, NULL, NULL, NULL, NULL, 'default', NULL, 5 FROM pixels WHERE is_default LIMIT 1)
      ) x ORDER BY prio LIMIT 1`,
     [ad, adset, cid],
   );
@@ -63,6 +64,6 @@ export async function resolvePixelFor({ slug, adId, adsetId, campaignId }: {
   return row
     ? { pixelId: row.pixel_id, slug: row.slug, campaignName: row.campaign_name, adsetName: row.adset_name, adName: row.ad_name,
         campaignId: row.campaign_id,
-        adsetId: row.adset_id, adId: row.ad_id, via: row.via }
+        adsetId: row.adset_id, adId: row.ad_id, via: row.via, mappingId: row.mapping_id }
     : NONE;
 }

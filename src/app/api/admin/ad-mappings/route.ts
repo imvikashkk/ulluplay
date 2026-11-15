@@ -19,7 +19,9 @@ export async function GET(req: NextRequest) {
                   WHERE p.campaign_slug = m.slug AND p.status = 'success'
                     AND CASE WHEN m.ad_id    IS NOT NULL THEN p.meta_ad_id    = m.ad_id
                              WHEN m.adset_id IS NOT NULL THEN p.meta_adset_id = m.adset_id
-                             ELSE p.meta_campaign_id = m.campaign_id END) AS conversions
+                             ELSE p.meta_campaign_id = m.campaign_id END) AS conversions,
+                -- conversions whose pixel was actually chosen by this mapping row
+                (SELECT COUNT(*)::int FROM payments p WHERE p.ad_mapping_id = m.id AND p.status = 'success') AS via_mapping
            FROM ad_slug_mappings m LEFT JOIN pixels px ON px.slug = m.slug
           ORDER BY m.is_active DESC, m.created_at DESC`,
       ),

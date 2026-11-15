@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { attributionVia, mappingIdOf } from '@/lib/attribution';
 import { verifyUserToken } from '@/lib/userAuth';
 import { createSabpaisaOrder } from '@/lib/sabpaisa';
 import { APP_ENV } from '@/lib/appEnv';
@@ -25,6 +26,8 @@ export async function POST(req: NextRequest) {
     let metaAdsetName: string | null = body.metaAdsetName ?? null;
     let metaAdId: string | null = body.metaAdId ?? null;
     let metaAdName: string | null = body.metaAdName ?? null;
+    let attrVia: string | null = attributionVia(body.attrVia);
+    let adMappingId: number | null = mappingIdOf(body.adMappingId);
 
     if (!planId) {
       return NextResponse.json(
@@ -58,7 +61,8 @@ export async function POST(req: NextRequest) {
     // Fallback to stored attribution if this session has no campaign or no ad click cookies
     if ((!campaignSlug || !fbc || !fbp) && user.mobile) {
       const attrRes = await pool.query(
-        `SELECT campaign_slug, meta_campaign_id, meta_campaign_name, meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, fbp, fbc
+        `SELECT campaign_slug, meta_campaign_id, meta_campaign_name, meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, fbp, fbc,
+                attribution_via, ad_mapping_id
          FROM phone_attributions WHERE mobile = $1`,
         [user.mobile],
       );
@@ -72,6 +76,8 @@ export async function POST(req: NextRequest) {
           metaAdsetName = attr.meta_adset_name || metaAdsetName;
           metaAdId = attr.meta_ad_id || metaAdId;
           metaAdName = attr.meta_ad_name || metaAdName;
+          attrVia = attr.attribution_via || attrVia;
+          adMappingId = attr.ad_mapping_id ?? adMappingId;
         }
         if (!fbp && attr.fbp) fbp = attr.fbp;
         if (!fbc && attr.fbc) fbc = attr.fbc;
@@ -93,8 +99,8 @@ export async function POST(req: NextRequest) {
 
     await pool.query(
       `INSERT INTO payments (user_id, plan_id, txn_id, amount, status, campaign_slug, cf_order_id, fbp, fbc, meta_campaign_id, meta_campaign_name, gateway_response, client_ip, user_agent,
-                             meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+                             meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, attribution_via, ad_mapping_id)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
       [
         userId,
         planId,
@@ -113,6 +119,8 @@ export async function POST(req: NextRequest) {
         metaAdsetName,
         metaAdId,
         metaAdName,
+        campaignSlug ? attrVia : null,
+        campaignSlug ? adMappingId : null,
       ],
     );
 
