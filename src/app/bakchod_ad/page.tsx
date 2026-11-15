@@ -1373,11 +1373,11 @@ function MarketingPanel() {
 
 /* ── Ad Mapping Panel (ads whose URL has no ?c=) ─────────── */
 interface AdMapping {
-  id: number; match_type: 'ad' | 'campaign'; meta_id: string; slug: string;
+  id: number; match_type: 'ad' | 'adset' | 'campaign'; meta_id: string; slug: string;
   campaign_name: string | null; note: string | null; is_active: boolean; created_at: string;
   pixel_label: string | null; pixel_id: string | null; conversions: number | null;
 }
-type MappingForm = { match_type: 'ad' | 'campaign'; meta_id: string; slug: string; campaign_name: string; note: string; is_active: boolean };
+type MappingForm = { match_type: 'ad' | 'adset' | 'campaign'; meta_id: string; slug: string; campaign_name: string; note: string; is_active: boolean };
 const EMPTY_MAPPING: MappingForm = { match_type: 'ad', meta_id: '', slug: '', campaign_name: '', note: '', is_active: true };
 
 function AdMappingsPanel() {
@@ -1433,8 +1433,8 @@ function AdMappingsPanel() {
     <div className="fu">
       <div className="rounded-[10px] px-4 py-3 mb-4 text-[12px] leading-relaxed text-stone-600" style={{ background: BLUE_LT, border: `1px solid ${BLUE_MD}` }}>
         Jis ad ke URL mein <b>?c=</b> nahi laga, uska pixel yahan se set karo — ad edit karke review mein bhejne ki zaroorat nahi.
-        Meta har click ke URL mein <b>utm_content</b> (Ad ID) aur <b>utm_id</b> (Campaign ID) khud jodta hai.
-        <span className="block mt-1 text-stone-500">Order: URL ka <b>?c=</b> → Ad ID mapping → Campaign ID mapping → campaign ka purana slug → default pixel.</span>
+        Meta har click ke URL mein <b>utm_content</b> (Ad ID), <b>utm_term</b> (Adset ID) aur <b>utm_id</b> (Campaign ID) khud jodta hai.
+        <span className="block mt-1 text-stone-500">Order: URL ka <b>?c=</b> → Ad ID mapping → Adset ID mapping → Campaign ID mapping → campaign ka purana slug → default pixel.</span>
       </div>
 
       <div className="flex justify-end mb-4">
@@ -1457,11 +1457,12 @@ function AdMappingsPanel() {
               <select value={form.match_type} onChange={(e) => set('match_type', e.target.value as MappingForm['match_type'])}
                 className={inputCls} style={{ ...inputStyle, cursor: 'pointer' }}>
                 <option value="ad">Ad ID (utm_content)</option>
+                <option value="adset">Adset ID (utm_term)</option>
                 <option value="campaign">Campaign ID (utm_id)</option>
               </select>
             </div>
             <div>
-              <label className={labelCls}>{form.match_type === 'ad' ? 'Meta Ad ID' : 'Meta Campaign ID'}</label>
+              <label className={labelCls}>{form.match_type === 'ad' ? 'Meta Ad ID' : form.match_type === 'adset' ? 'Meta Adset ID' : 'Meta Campaign ID'}</label>
               <input value={form.meta_id} onChange={(e) => set('meta_id', e.target.value.replace(/\D/g, ''))}
                 placeholder="e.g. 120248366307600144" inputMode="numeric" className={inputCls + ' font-mono'} style={inputStyle} />
             </div>
@@ -1521,8 +1522,8 @@ function AdMappingsPanel() {
                 <tr key={m.id} style={{ borderBottom: '1px solid #F3EFE8', opacity: m.is_active ? 1 : 0.5 }}>
                   <td className="px-5 py-3.5">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-                      style={m.match_type === 'ad' ? { background: '#EFF6FF', color: '#1D4ED8' } : { background: '#F5F3FF', color: '#7C3AED' }}>
-                      {m.match_type === 'ad' ? 'Ad ID' : 'Campaign ID'}
+                      style={m.match_type === 'ad' ? { background: '#EFF6FF', color: '#1D4ED8' } : m.match_type === 'adset' ? { background: '#ECFDF5', color: '#047857' } : { background: '#F5F3FF', color: '#7C3AED' }}>
+                      {m.match_type === 'ad' ? 'Ad ID' : m.match_type === 'adset' ? 'Adset ID' : 'Campaign ID'}
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-[11px] font-mono text-stone-700 select-all whitespace-nowrap">{m.meta_id}</td>
@@ -1578,7 +1579,7 @@ const ADMIN_TITLES: Record<AdminTab, [string, string]> = {
   payments:      ['Payments', 'Har payment — status, campaign aur source ke saath.'],
   subscriptions: ['Subscriptions', 'Kiske paas access hai, kab tak — aur kisi ko bhi free access do.'],
   marketing:     ['Marketing', 'Pixels, attribution aur conversion analytics.'],
-  adMappings:    ['Ad Mapping', 'Bina ?c= wale ads ko Ad ID / Campaign ID se sahi pixel par bhejo.'],
+  adMappings:    ['Ad Mapping', 'Bina ?c= wale ads ko Ad ID / Adset ID / Campaign ID se sahi pixel par bhejo.'],
   mediaBuyers:   ['Media Buyers', 'Media buyers jo pixels aur campaigns chalate hain.'],
 };
 

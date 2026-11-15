@@ -164,7 +164,7 @@ ALTER TABLE phone_attributions ALTER COLUMN fbc TYPE TEXT, ALTER COLUMN fbp TYPE
 -- Managed from the admin panel (bakchod_ad → Ad Mapping). Ad mapping wins over campaign mapping.
 CREATE TABLE IF NOT EXISTS ad_slug_mappings (
   id            SERIAL PRIMARY KEY,
-  match_type    VARCHAR(10)  NOT NULL CHECK (match_type IN ('ad', 'campaign')),
+  match_type    VARCHAR(10)  NOT NULL CHECK (match_type IN ('ad', 'adset', 'campaign')),
   meta_id       VARCHAR(40)  NOT NULL,
   slug          VARCHAR(50)  NOT NULL REFERENCES pixels(slug) ON UPDATE CASCADE ON DELETE CASCADE,
   campaign_name VARCHAR(200),

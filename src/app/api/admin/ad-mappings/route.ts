@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
                 px.label AS pixel_label, px.pixel_id,
                 (SELECT COUNT(*)::int FROM payments p
                   WHERE p.campaign_slug = m.slug AND p.status = 'success'
-                    AND (CASE m.match_type WHEN 'ad' THEN p.meta_ad_id ELSE p.meta_campaign_id END) = m.meta_id) AS conversions
+                    AND (CASE m.match_type WHEN 'ad' THEN p.meta_ad_id WHEN 'adset' THEN p.meta_adset_id ELSE p.meta_campaign_id END) = m.meta_id) AS conversions
            FROM ad_slug_mappings m LEFT JOIN pixels px ON px.slug = m.slug
           ORDER BY m.is_active DESC, m.created_at DESC`,
       ),

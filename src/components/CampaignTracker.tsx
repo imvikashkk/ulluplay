@@ -77,10 +77,11 @@ export default function CampaignTracker() {
     // Save the ad click (fbclid) even without a slug, so CAPI can still match the purchase
     ensureFbCookies(params.get('fbclid'));
 
-    // No ?c= on a Meta ad click → resolve the pixel from admin "Ad Mapping" (ad id → campaign id → history)
+    // No ?c= on a Meta ad click → resolve the pixel from admin "Ad Mapping" (ad id → adset id → campaign id → history)
     const adId  = ids.meta_ad_id && isResolved(ids.meta_ad_id) ? ids.meta_ad_id : '';
+    const adsetId = ids.meta_adset_id && isResolved(ids.meta_adset_id) ? ids.meta_adset_id : '';
     const campId = metaCampaignId && isResolved(metaCampaignId) ? metaCampaignId : '';
-    const resolveFromAd = !slug && fromMetaAd && !!(adId || campId);
+    const resolveFromAd = !slug && fromMetaAd && !!(adId || adsetId || campId);
 
     const campaignSlug = slug || localStorage.getItem('mr_campaign') || '';
     if (!campaignSlug && !resolveFromAd) return;
@@ -88,7 +89,7 @@ export default function CampaignTracker() {
     loadPixelBase();
 
     const query = resolveFromAd
-      ? new URLSearchParams({ ...(adId && { ad: adId }), ...(campId && { cid: campId }) }).toString()
+      ? new URLSearchParams({ ...(adId && { ad: adId }), ...(adsetId && { adset: adsetId }), ...(campId && { cid: campId }) }).toString()
       : `c=${encodeURIComponent(campaignSlug)}`;
     fetch(`/api/pixel-config?${query}`)
       .then((r) => r.json())

@@ -4,10 +4,10 @@ export interface MappingInput { match_type: string; meta_id: string; slug: strin
 
 // Shared validation for POST / PUT
 export function parseMapping(body: Partial<MappingInput>): { ok: true; v: Required<MappingInput> } | { ok: false; message: string } {
-  const match_type = body.match_type === 'campaign' ? 'campaign' : body.match_type === 'ad' ? 'ad' : '';
+  const match_type = ['ad', 'adset', 'campaign'].includes(String(body.match_type)) ? String(body.match_type) : '';
   const meta_id = String(body.meta_id ?? '').trim();
   const slug = String(body.slug ?? '').trim();
-  if (!match_type) return { ok: false, message: 'Type must be Ad ID or Campaign ID' };
+  if (!match_type) return { ok: false, message: 'Type must be Ad ID, Adset ID or Campaign ID' };
   if (!/^\d{5,30}$/.test(meta_id)) return { ok: false, message: 'Meta ID sirf digits (5–30) hona chahiye' };
   if (!slug) return { ok: false, message: 'Pixel select karo' };
   return {
