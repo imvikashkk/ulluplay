@@ -14,10 +14,9 @@ export async function GET(req: NextRequest) {
       pool.query(
         `SELECT m.id, m.match_type, m.meta_id, m.slug, m.campaign_name, m.note, m.is_active, m.created_at,
                 px.label AS pixel_label, px.pixel_id,
-                CASE WHEN m.match_type = 'campaign' THEN
-                  (SELECT COUNT(*)::int FROM payments p
-                    WHERE p.campaign_slug = m.slug AND p.status = 'success' AND p.meta_campaign_id = m.meta_id)
-                END AS conversions
+                (SELECT COUNT(*)::int FROM payments p
+                  WHERE p.campaign_slug = m.slug AND p.status = 'success'
+                    AND (CASE m.match_type WHEN 'ad' THEN p.meta_ad_id ELSE p.meta_campaign_id END) = m.meta_id) AS conversions
            FROM ad_slug_mappings m LEFT JOIN pixels px ON px.slug = m.slug
           ORDER BY m.is_active DESC, m.created_at DESC`,
       ),

@@ -20,7 +20,7 @@ const STATUS_CFG: Record<string, { bg: string; color: string; border: string; la
 };
 
 interface Profile  { id: number; name: string; email: string | null }
-interface PayRow   { id: number; user_mobile: string; amount: number; status: string; campaign_slug: string | null; pixel_id: string | null; ad_account_id: string | null; meta_campaign_id: string | null; meta_campaign_name: string | null; created_at: string }
+interface PayRow   { id: number; user_mobile: string; amount: number; status: string; campaign_slug: string | null; pixel_id: string | null; ad_account_id: string | null; meta_campaign_id: string | null; meta_campaign_name: string | null; meta_adset_id: string | null; meta_adset_name: string | null; meta_ad_id: string | null; meta_ad_name: string | null; created_at: string }
 interface PayStats { total: string; successful: string; pending: string; failed: string; revenue: string }
 interface MktOverview { total_purchases: string; capi_sent: string; capi_issues: string }
 interface PixelStat   { id: number; slug: string; label: string; pixel_id: string; ad_account_id: string | null; purchases: string; capi_sent: string; capi_issues: string }
@@ -181,7 +181,7 @@ export default function MBDashboard() {
   }
 
   const metaUrl = (slug: string) =>
-    `${baseUrl}/?c=${slug}&meta_campaign_id={{campaign.id}}&meta_campaign_name={{campaign.name}}`;
+    `${baseUrl}/?c=${slug}&meta_campaign_id={{campaign.id}}&meta_campaign_name={{campaign.name}}&meta_adset_id={{adset.id}}&meta_adset_name={{adset.name}}&meta_ad_id={{ad.id}}&meta_ad_name={{ad.name}}`;
 
   function copyLink(slug: string) {
     navigator.clipboard.writeText(metaUrl(slug)).then(() => {
@@ -292,7 +292,7 @@ export default function MBDashboard() {
                 <table className="w-full text-left min-w-[700px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid #F1EDE6', background: '#FAF8F4' }}>
-                      {['SN', 'Mobile', 'Amount', 'Status', 'Campaign', 'Meta Cmp Name / ID', 'Date & Time'].map((h) => (
+                      {['SN', 'Mobile', 'Amount', 'Status', 'Campaign', 'Meta Cmp Name / ID', 'Adset Name / ID', 'Ad Name / ID', 'Date & Time'].map((h) => (
                         <th key={h} className="px-5 py-3 text-[9px] font-bold uppercase tracking-[.16em] text-stone-400">{h}</th>
                       ))}
                     </tr>
@@ -301,13 +301,13 @@ export default function MBDashboard() {
                     {payLoading ? (
                       Array.from({ length: 6 }).map((_, i) => (
                         <tr key={i} style={{ borderBottom: '1px solid #FAF8F4' }}>
-                          {[30, 110, 60, 70, 160, 140, 130].map((w, j) => (
+                          {[30, 110, 60, 70, 160, 140, 140, 140, 130].map((w, j) => (
                             <td key={j} className="px-5 py-3.5"><div className="h-4 rounded animate-pulse bg-stone-100" style={{ width: w }} /></td>
                           ))}
                         </tr>
                       ))
                     ) : payRows.length === 0 ? (
-                      <tr><td colSpan={7} className="px-5 py-10 text-center text-[13px] text-stone-400">No payments found</td></tr>
+                      <tr><td colSpan={9} className="px-5 py-10 text-center text-[13px] text-stone-400">No payments found</td></tr>
                     ) : (
                       payRows.map((row, i) => (
                         <tr key={row.id} style={{ borderBottom: '1px solid #FAF8F4' }} className="hover:bg-stone-50/50 transition-colors">
@@ -337,6 +337,38 @@ export default function MBDashboard() {
                                 )}
                               </div>
                             ) : <span className="text-[12px] text-stone-300">—</span>}
+                          </td>
+                          <td className="px-5 py-3.5 max-w-[180px]">
+                            {row.meta_adset_id || row.meta_adset_name ? (
+                              <div className="flex flex-col gap-1">
+                                {row.meta_adset_id && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded inline-block w-fit select-all" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>
+                                    {row.meta_adset_id}
+                                  </span>
+                                )}
+                                {row.meta_adset_name && (
+                                  <span className="text-[10px] font-semibold text-stone-600">{row.meta_adset_name}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[12px] text-stone-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5 max-w-[180px]">
+                            {row.meta_ad_id || row.meta_ad_name ? (
+                              <div className="flex flex-col gap-1">
+                                {row.meta_ad_id && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded inline-block w-fit select-all" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>
+                                    {row.meta_ad_id}
+                                  </span>
+                                )}
+                                {row.meta_ad_name && (
+                                  <span className="text-[10px] font-semibold text-stone-600">{row.meta_ad_name}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[12px] text-stone-300">—</span>
+                            )}
                           </td>
                           <td className="px-5 py-3.5 text-[11px] text-stone-400 whitespace-nowrap">{fmt(row.created_at)}</td>
                         </tr>

@@ -21,17 +21,23 @@ async function resolvePixel(campaignSlug: string): Promise<{ pixelId: string; ac
 
 async function sendMetaPurchaseEvent({
   pixelId, accessToken, eventId, value, ip, userAgent, phone, sourceUrl, fbp, fbc,
-  metaCampaignId, metaCampaignName,
+  metaCampaignId, metaCampaignName, metaAdsetId, metaAdsetName, metaAdId, metaAdName,
 }: {
   pixelId: string; accessToken: string;
   eventId: string; value: number; ip: string; userAgent: string;
   phone: string; sourceUrl: string; fbp: string; fbc: string;
   metaCampaignId?: string | null; metaCampaignName?: string | null;
+  metaAdsetId?: string | null; metaAdsetName?: string | null;
+  metaAdId?: string | null; metaAdName?: string | null;
 }): Promise<string | null> {
   try {
     const customData: Record<string, unknown> = { currency: 'INR', value };
     if (metaCampaignId)   customData.campaign_id   = metaCampaignId;
     if (metaCampaignName) customData.campaign_name = metaCampaignName;
+    if (metaAdsetId)      customData.adset_id      = metaAdsetId;
+    if (metaAdsetName)    customData.adset_name    = metaAdsetName;
+    if (metaAdId)         customData.ad_id         = metaAdId;
+    if (metaAdName)       customData.ad_name       = metaAdName;
 
     const payload = {
       data: [{
@@ -79,7 +85,8 @@ export async function activateSubscription(
 
   const payRes = await pool.query(
     `SELECT id, user_id, plan_id, status, campaign_slug,
-            fbp, fbc, meta_campaign_id, meta_campaign_name, amount, client_ip, user_agent
+            fbp, fbc, meta_campaign_id, meta_campaign_name, meta_adset_id, meta_adset_name,
+            meta_ad_id, meta_ad_name, amount, client_ip, user_agent
      FROM payments WHERE txn_id = $1`,
     [txnId],
   );
@@ -192,6 +199,10 @@ export async function activateSubscription(
         fbc: pay.fbc || fbc || '',
         metaCampaignId:   pay.meta_campaign_id,
         metaCampaignName: pay.meta_campaign_name,
+        metaAdsetId:      pay.meta_adset_id,
+        metaAdsetName:    pay.meta_adset_name,
+        metaAdId:         pay.meta_ad_id,
+        metaAdName:       pay.meta_ad_name,
       });
 
       await pool.query(

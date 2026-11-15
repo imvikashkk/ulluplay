@@ -11,6 +11,10 @@ export async function POST(req: NextRequest) {
       campaignSlug = '',
       metaCampaignId = '',
       metaCampaignName = '',
+      metaAdsetId = '',
+      metaAdsetName = '',
+      metaAdId = '',
+      metaAdName = '',
       fbp: bodyFbp = '',
       fbc: bodyFbc = '',
     } = await req.json();
@@ -26,19 +30,27 @@ export async function POST(req: NextRequest) {
     const fbp = req.cookies.get('_fbp')?.value || bodyFbp || '';
     const fbc = req.cookies.get('_fbc')?.value || bodyFbc || '';
 
+    // Unresolved Meta macros ({{adset.id}} etc.) and empty values → null
+    const clean = (v: unknown) =>
+      typeof v === 'string' && v && !v.includes('{{') ? v : null;
+
     // Save attribution (campaign + fbp/fbc). Also when there's no slug but we have an ad click,
     // so a later payment (other tab / browser) can still send fbc to Meta.
     const slugOk = !!campaignSlug && !campaignSlug.includes('{{');
-    const cidOk  = !!metaCampaignId && !metaCampaignId.includes('{{');
-    if (slugOk || fbc || cidOk) {
+    if (slugOk || fbc || clean(metaCampaignId) || clean(metaAdId)) {
       try {
         await pool.query(
-          `INSERT INTO phone_attributions (mobile, campaign_slug, meta_campaign_id, meta_campaign_name, fbp, fbc)
-           VALUES ($1, $2, $3, $4, $5, $6)
+          `INSERT INTO phone_attributions (mobile, campaign_slug, meta_campaign_id, meta_campaign_name,
+             meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, fbp, fbc)
+           VALUES ($1, $2, $3, $4, $7, $8, $9, $10, $5, $6)
            ON CONFLICT (mobile) DO UPDATE SET
              campaign_slug      = EXCLUDED.campaign_slug,
              meta_campaign_id   = EXCLUDED.meta_campaign_id,
              meta_campaign_name = EXCLUDED.meta_campaign_name,
+             meta_adset_id      = EXCLUDED.meta_adset_id,
+             meta_adset_name    = EXCLUDED.meta_adset_name,
+             meta_ad_id         = EXCLUDED.meta_ad_id,
+             meta_ad_name       = EXCLUDED.meta_ad_name,
              fbp                = EXCLUDED.fbp,
              fbc                = EXCLUDED.fbc`,
           [
@@ -52,6 +64,10 @@ export async function POST(req: NextRequest) {
               : null,
             fbp || null,
             fbc || null,
+            clean(metaAdsetId),
+            clean(metaAdsetName),
+            clean(metaAdId),
+            clean(metaAdName),
           ],
         );
       } catch (attrErr) {

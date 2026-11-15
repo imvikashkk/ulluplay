@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
     let campaignSlug: string = body.campaignSlug ?? '';
     let metaCampaignId: string | null = body.metaCampaignId ?? null;
     let metaCampaignName: string | null = body.metaCampaignName ?? null;
+    let metaAdsetId: string | null = body.metaAdsetId ?? null;
+    let metaAdsetName: string | null = body.metaAdsetName ?? null;
+    let metaAdId: string | null = body.metaAdId ?? null;
+    let metaAdName: string | null = body.metaAdName ?? null;
 
     if (!planId) {
       return NextResponse.json(
@@ -54,7 +58,8 @@ export async function POST(req: NextRequest) {
     // Fallback to stored attribution if this session has no campaign or no ad click cookies
     if ((!campaignSlug || !fbc || !fbp) && user.mobile) {
       const attrRes = await pool.query(
-        `SELECT campaign_slug, meta_campaign_id, meta_campaign_name, fbp, fbc FROM phone_attributions WHERE mobile = $1`,
+        `SELECT campaign_slug, meta_campaign_id, meta_campaign_name, meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name, fbp, fbc
+         FROM phone_attributions WHERE mobile = $1`,
         [user.mobile],
       );
       if (attrRes.rows.length > 0) {
@@ -63,6 +68,10 @@ export async function POST(req: NextRequest) {
           campaignSlug = attr.campaign_slug || campaignSlug;
           metaCampaignId = attr.meta_campaign_id || metaCampaignId;
           metaCampaignName = attr.meta_campaign_name || metaCampaignName;
+          metaAdsetId = attr.meta_adset_id || metaAdsetId;
+          metaAdsetName = attr.meta_adset_name || metaAdsetName;
+          metaAdId = attr.meta_ad_id || metaAdId;
+          metaAdName = attr.meta_ad_name || metaAdName;
         }
         if (!fbp && attr.fbp) fbp = attr.fbp;
         if (!fbc && attr.fbc) fbc = attr.fbc;
@@ -83,8 +92,9 @@ export async function POST(req: NextRequest) {
     const txnId = order.orderId;
 
     await pool.query(
-      `INSERT INTO payments (user_id, plan_id, txn_id, amount, status, campaign_slug, cf_order_id, fbp, fbc, meta_campaign_id, meta_campaign_name, gateway_response, client_ip, user_agent)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      `INSERT INTO payments (user_id, plan_id, txn_id, amount, status, campaign_slug, cf_order_id, fbp, fbc, meta_campaign_id, meta_campaign_name, gateway_response, client_ip, user_agent,
+                             meta_adset_id, meta_adset_name, meta_ad_id, meta_ad_name)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
       [
         userId,
         planId,
@@ -99,6 +109,10 @@ export async function POST(req: NextRequest) {
         JSON.stringify({ expiresAt: order.expiresAt, gateway: 'sabpaisa', env: APP_ENV }),
         req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
         req.headers.get('user-agent') || null,
+        metaAdsetId,
+        metaAdsetName,
+        metaAdId,
+        metaAdName,
       ],
     );
 

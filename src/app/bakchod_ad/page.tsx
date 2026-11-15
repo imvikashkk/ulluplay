@@ -31,6 +31,7 @@ interface PaymentRow {
   ad_account_id: string | null;
   meta_campaign_id: string | null;
   meta_campaign_name: string | null;
+  meta_adset_id: string | null; meta_adset_name: string | null; meta_ad_id: string | null; meta_ad_name: string | null;
 }
 
 interface Stats {
@@ -866,7 +867,7 @@ function MarketingPanel() {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? '');
 
   const metaUrl = (slug: string) =>
-    `${baseUrl}/?c=${slug}&meta_campaign_id={{campaign.id}}&meta_campaign_name={{campaign.name}}`;
+    `${baseUrl}/?c=${slug}&meta_campaign_id={{campaign.id}}&meta_campaign_name={{campaign.name}}&meta_adset_id={{adset.id}}&meta_adset_name={{adset.name}}&meta_ad_id={{ad.id}}&meta_ad_name={{ad.name}}`;
 
   function copyLink(slug: string) {
     const url = metaUrl(slug);
@@ -1792,7 +1793,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-left min-w-[900px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid #F1EDE6', background: '#FAF8F4' }}>
-                      {['SN', 'User ID', 'Mobile', 'Amount', 'Status', 'MediaBuyer', 'Campaign', 'Meta Cmp Name / ID', 'Date & Time'].map((h) => (
+                      {['SN', 'User ID', 'Mobile', 'Amount', 'Status', 'MediaBuyer', 'Campaign', 'Meta Cmp Name / ID', 'Adset Name / ID', 'Ad Name / ID', 'Date & Time'].map((h) => (
                         <th key={h} className="px-5 py-3 text-[9px] font-bold uppercase tracking-[.16em] text-stone-400">{h}</th>
                       ))}
                     </tr>
@@ -1801,7 +1802,7 @@ export default function AdminDashboard() {
                     {loading ? (
                       Array.from({ length: 8 }).map((_, i) => (
                         <tr key={i} style={{ borderBottom: '1px solid #FAF8F4' }}>
-                          {[30, 60, 110, 55, 70, 90, 160, 140, 130].map((w, j) => (
+                          {[30, 60, 110, 55, 70, 90, 160, 140, 140, 140, 130].map((w, j) => (
                             <td key={j} className="px-5 py-3.5">
                               <div className="h-4 rounded-lg animate-pulse bg-stone-100" style={{ width: w }} />
                             </td>
@@ -1809,7 +1810,7 @@ export default function AdminDashboard() {
                         </tr>
                       ))
                     ) : rows.length === 0 ? (
-                      <tr><td colSpan={9} className="px-5 py-10 text-center text-[13px] text-stone-400">No payments found</td></tr>
+                      <tr><td colSpan={11} className="px-5 py-10 text-center text-[13px] text-stone-400">No payments found</td></tr>
                     ) : (
                       rows.map((row, i) => (
                         <tr key={`${row.user_id}-${row.txn_id}-${i}`} style={{ borderBottom: '1px solid #FAF8F4', transition: 'background .12s' }}>
@@ -1858,7 +1859,39 @@ export default function AdminDashboard() {
                               <span className="text-[12px] text-stone-300">—</span>
                             )}
                           </td>
-                          <td className="px-5 py-3.5"><span className="text-[11px] text-stone-400">{formatDate(row.date_time)}</span></td>
+                          <td className="px-5 py-3.5 max-w-[180px]">
+                            {row.meta_adset_id || row.meta_adset_name ? (
+                              <div className="flex flex-col gap-1">
+                                {row.meta_adset_id && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded inline-block w-fit select-all" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>
+                                    {row.meta_adset_id}
+                                  </span>
+                                )}
+                                {row.meta_adset_name && (
+                                  <span className="text-[10px] font-semibold text-stone-600">{row.meta_adset_name}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[12px] text-stone-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5 max-w-[180px]">
+                            {row.meta_ad_id || row.meta_ad_name ? (
+                              <div className="flex flex-col gap-1">
+                                {row.meta_ad_id && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded inline-block w-fit select-all" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' }}>
+                                    {row.meta_ad_id}
+                                  </span>
+                                )}
+                                {row.meta_ad_name && (
+                                  <span className="text-[10px] font-semibold text-stone-600">{row.meta_ad_name}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[12px] text-stone-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3.5"><span className="text-[11px] text-stone-400 whitespace-nowrap">{formatDate(row.date_time)}</span></td>
                         </tr>
                       ))
                     )}

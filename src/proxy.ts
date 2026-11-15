@@ -40,6 +40,9 @@ export function proxy(req: NextRequest) {
     if (sp.get('c'))                  authUrl.searchParams.set('c',                  sp.get('c')!);
     if (sp.get('meta_campaign_id'))   authUrl.searchParams.set('meta_campaign_id',   sp.get('meta_campaign_id')!);
     if (sp.get('meta_campaign_name')) authUrl.searchParams.set('meta_campaign_name', sp.get('meta_campaign_name')!);
+    for (const k of ['meta_adset_id', 'meta_adset_name', 'meta_ad_id', 'meta_ad_name']) {
+      if (sp.get(k)) authUrl.searchParams.set(k, sp.get(k)!);
+    }
     if (sp.get('fbclid'))             authUrl.searchParams.set('fbclid',             sp.get('fbclid')!);
     for (const k of UTM_KEYS) if (sp.get(k)) authUrl.searchParams.set(k, sp.get(k)!);
     return NextResponse.redirect(authUrl);
@@ -56,6 +59,9 @@ export function proxy(req: NextRequest) {
     if (sp.get('c'))                  subUrl.searchParams.set('c',                  sp.get('c')!);
     if (sp.get('meta_campaign_id'))   subUrl.searchParams.set('meta_campaign_id',   sp.get('meta_campaign_id')!);
     if (sp.get('meta_campaign_name')) subUrl.searchParams.set('meta_campaign_name', sp.get('meta_campaign_name')!);
+    for (const k of ['meta_adset_id', 'meta_adset_name', 'meta_ad_id', 'meta_ad_name']) {
+      if (sp.get(k)) subUrl.searchParams.set(k, sp.get(k)!);
+    }
     if (sp.get('fbclid'))             subUrl.searchParams.set('fbclid',             sp.get('fbclid')!);
     for (const k of UTM_KEYS) if (sp.get(k)) subUrl.searchParams.set(k, sp.get(k)!);
     return NextResponse.redirect(subUrl);

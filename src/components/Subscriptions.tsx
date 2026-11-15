@@ -177,6 +177,7 @@ export default function SubscriptionsPage() {
           localStorage.removeItem('mr_campaign');
           localStorage.removeItem('mr_meta_campaign_id');
           localStorage.removeItem('mr_meta_campaign_name');
+          ['mr_meta_adset_id', 'mr_meta_adset_name', 'mr_meta_ad_id', 'mr_meta_ad_name'].forEach((k) => localStorage.removeItem(k));
           window.location.replace('/');
           return;
         }

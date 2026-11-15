@@ -119,7 +119,7 @@ export default function PanelShell<K extends string>({
 
       {/* ── Content ── */}
       <main className="k-panel lg:pl-60">
-        <div className="px-4 md:px-8 py-6 md:py-8 max-w-[1280px]">
+        <div className="px-4 md:px-8 py-6 md:py-8 max-w-[1840px]">
           <div className="mb-6 fu">
             <h1 className="k-display m-0 text-[34px] md:text-[42px] text-stone-900">{title}</h1>
             {subtitle && <p className="m-0 mt-1 text-[13px] text-stone-500">{subtitle}</p>}

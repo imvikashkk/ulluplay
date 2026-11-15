@@ -56,18 +56,29 @@ export default function CampaignTracker() {
     const num = (v: string | null) => (v && /^\d+$/.test(v) ? v : null);
 
     // Meta auto-appends utm_* to every ad click, even when the ad's own URL has no ?c=:
-    // utm_id = campaign id, utm_content = ad id
+    // utm_id = campaign id, utm_term = adset id, utm_content = ad id
     const fromMetaAd = !!params.get('fbclid') || /^(ig|fb|an|msg|facebook|instagram)$/i.test(params.get('utm_source') ?? '');
-    const metaCampaignId   = params.get('meta_campaign_id') || (fromMetaAd ? num(params.get('utm_id')) : null);
+    const utm = (k: string) => (fromMetaAd ? num(params.get(k)) : null);
+
+    const metaCampaignId   = params.get('meta_campaign_id') || utm('utm_id');
     const metaCampaignName = params.get('meta_campaign_name');
     if (metaCampaignId   && isResolved(metaCampaignId))   localStorage.setItem('mr_meta_campaign_id',   metaCampaignId);
     if (metaCampaignName && isResolved(metaCampaignName)) localStorage.setItem('mr_meta_campaign_name', metaCampaignName);
+    const ids: Record<string, string | null> = {
+      meta_adset_id: params.get('meta_adset_id') || utm('utm_term'),
+      meta_adset_name: params.get('meta_adset_name'),
+      meta_ad_id: params.get('meta_ad_id') || utm('utm_content'),
+      meta_ad_name: params.get('meta_ad_name'),
+    };
+    for (const [k, v] of Object.entries(ids)) {
+      if (v && isResolved(v)) localStorage.setItem(`mr_${k}`, v);
+    }
 
     // Save the ad click (fbclid) even without a slug, so CAPI can still match the purchase
     ensureFbCookies(params.get('fbclid'));
 
     // No ?c= on a Meta ad click → resolve the pixel from admin "Ad Mapping" (ad id → campaign id → history)
-    const adId   = fromMetaAd ? num(params.get('utm_content')) ?? '' : '';
+    const adId  = ids.meta_ad_id && isResolved(ids.meta_ad_id) ? ids.meta_ad_id : '';
     const campId = metaCampaignId && isResolved(metaCampaignId) ? metaCampaignId : '';
     const resolveFromAd = !slug && fromMetaAd && !!(adId || campId);
 
