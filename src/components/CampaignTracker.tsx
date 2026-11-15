@@ -49,6 +49,11 @@ const AD_SLUG_MAP: Record<string, { slug: string; campaignName?: string }> = {
   '120248366307600144': { slug: 'ullu', campaignName: 'zenz-cp2' },
 };
 
+// TEMP: Meta campaign id (utm_id) → pixel slug, for any other ad in the campaign without ?c= (ad map wins)
+const CAMPAIGN_SLUG_MAP: Record<string, { slug: string; campaignName?: string }> = {
+  '120248347529370144': { slug: 'ullu', campaignName: 'zenz-cp2' }, // zenz-cp2
+};
+
 export default function CampaignTracker() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -62,7 +67,7 @@ export default function CampaignTracker() {
     const utmId = params.get('utm_id');
     const fromMetaAd = !!params.get('fbclid') || /^(ig|fb|an|msg|facebook|instagram)$/i.test(params.get('utm_source') ?? '');
     const metaCampaignId   = params.get('meta_campaign_id') || (fromMetaAd && utmId && /^\d+$/.test(utmId) ? utmId : null);
-    const adMap = AD_SLUG_MAP[params.get('utm_content') ?? ''];
+    const adMap = AD_SLUG_MAP[params.get('utm_content') ?? ''] ?? (fromMetaAd ? CAMPAIGN_SLUG_MAP[utmId ?? ''] : undefined);
     const metaCampaignName = params.get('meta_campaign_name') || (fromMetaAd ? adMap?.campaignName ?? null : null);
     if (metaCampaignId   && isResolved(metaCampaignId))   localStorage.setItem('mr_meta_campaign_id',   metaCampaignId);
     if (metaCampaignName && isResolved(metaCampaignName)) localStorage.setItem('mr_meta_campaign_name', metaCampaignName);
