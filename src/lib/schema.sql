@@ -160,20 +160,23 @@ ALTER TABLE payments           ALTER COLUMN fbc TYPE TEXT, ALTER COLUMN fbp TYPE
 ALTER TABLE phone_attributions ALTER COLUMN fbc TYPE TEXT, ALTER COLUMN fbp TYPE TEXT;
 
 -- ── Ad Mapping (ads without ?c=) ───────────────────────────────
--- Ads whose URL is missing ?c=<slug>: map Meta ad id (utm_content) / campaign id (utm_id) → pixel slug.
--- Managed from the admin panel (bakchod_ad → Ad Mapping). Ad mapping wins over campaign mapping.
+-- Ads whose URL is missing ?c=<slug>: Meta ad / adset / campaign id → pixel slug.
+-- Managed from the admin panel (bakchod_ad → Ad Mapping). The most specific id filled in is matched.
 CREATE TABLE IF NOT EXISTS ad_slug_mappings (
   id            SERIAL PRIMARY KEY,
-  match_type    VARCHAR(10)  NOT NULL CHECK (match_type IN ('ad', 'adset', 'campaign')),
-  meta_id       VARCHAR(40)  NOT NULL,
+  ad_id         VARCHAR(40),
+  adset_id      VARCHAR(40),
+  campaign_id   VARCHAR(40),
   slug          VARCHAR(50)  NOT NULL REFERENCES pixels(slug) ON UPDATE CASCADE ON DELETE CASCADE,
   campaign_name VARCHAR(200),
   note          TEXT,
   is_active     BOOLEAN      NOT NULL DEFAULT true,
   created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  UNIQUE (match_type, meta_id)
+  CONSTRAINT ad_slug_mappings_any_id CHECK (ad_id IS NOT NULL OR adset_id IS NOT NULL OR campaign_id IS NOT NULL)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS ad_slug_mappings_ids_key
+  ON ad_slug_mappings (COALESCE(ad_id, ''), COALESCE(adset_id, ''), COALESCE(campaign_id, ''));
 
 -- ── Meta adset / ad ─────────────────────────────────────────────
 -- Meta adset / ad tracking (URL params meta_adset_* / meta_ad_*, or Meta's utm_term / utm_content)

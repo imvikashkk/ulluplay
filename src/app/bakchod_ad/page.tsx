@@ -1373,12 +1373,31 @@ function MarketingPanel() {
 
 /* ── Ad Mapping Panel (ads whose URL has no ?c=) ─────────── */
 interface AdMapping {
-  id: number; match_type: 'ad' | 'adset' | 'campaign'; meta_id: string; slug: string;
+  id: number; ad_id: string | null; adset_id: string | null; campaign_id: string | null; slug: string;
   campaign_name: string | null; note: string | null; is_active: boolean; created_at: string;
-  pixel_label: string | null; pixel_id: string | null; conversions: number | null;
+  pixel_label: string | null; pixel_id: string | null; conversions: number;
 }
-type MappingForm = { match_type: 'ad' | 'adset' | 'campaign'; meta_id: string; slug: string; campaign_name: string; note: string; is_active: boolean };
-const EMPTY_MAPPING: MappingForm = { match_type: 'ad', meta_id: '', slug: '', campaign_name: '', note: '', is_active: true };
+type MappingForm = { ad_id: string; adset_id: string; campaign_id: string; slug: string; campaign_name: string; note: string; is_active: boolean };
+const EMPTY_MAPPING: MappingForm = { ad_id: '', adset_id: '', campaign_id: '', slug: '', campaign_name: '', note: '', is_active: true };
+const isMetaIdInput = (v: string) => v === '' || /^\d{5,30}$/.test(v);
+
+// The id a mapping is matched on: its most specific one
+function mappingKey(m: { ad_id: string | null; adset_id: string | null }) {
+  return m.ad_id ? 'ad' : m.adset_id ? 'adset' : 'campaign';
+}
+
+function IdCell({ id, active }: { id: string | null; active: boolean }) {
+  if (!id) return <span className="text-[12px] text-stone-300">—</span>;
+  return (
+    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded inline-block select-all whitespace-nowrap"
+      style={active
+        ? { background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', fontWeight: 700 }
+        : { background: '#FAF8F4', color: '#776D62', border: '1px solid #E6E0D6' }}
+      title={active ? 'Isi ID se match hota hai' : 'Sirf jaankari — payment mein save hoti hai'}>
+      {id}
+    </span>
+  );
+}
 
 function AdMappingsPanel() {
   const [rows, setRows]       = useState<AdMapping[]>([]);
@@ -1417,7 +1436,7 @@ function AdMappingsPanel() {
   async function toggle(m: AdMapping) {
     await fetch(`/api/admin/ad-mappings/${m.id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...m, campaign_name: m.campaign_name ?? '', note: m.note ?? '', is_active: !m.is_active }),
+      body: JSON.stringify({ ...m, is_active: !m.is_active }),
     });
     load();
   }
@@ -1427,14 +1446,29 @@ function AdMappingsPanel() {
     setDelConfirm(null); load();
   }
 
-  const canSave = !!form && /^\d{5,30}$/.test(form.meta_id) && !!form.slug;
+  const idsValid = !!form && isMetaIdInput(form.ad_id) && isMetaIdInput(form.adset_id) && isMetaIdInput(form.campaign_id);
+  const hasId = !!form && !!(form.ad_id || form.adset_id || form.campaign_id);
+  const canSave = idsValid && hasId && !!form?.slug;
+  const matchOn = form ? (form.ad_id ? 'Ad ID' : form.adset_id ? 'Adset ID' : form.campaign_id ? 'Campaign ID' : '') : '';
+
+  const idInput = (k: 'ad_id' | 'adset_id' | 'campaign_id', label: string, hint: string) => (
+    <div>
+      <label className={labelCls}>{label} <span className="normal-case tracking-normal font-semibold text-stone-400">({hint})</span></label>
+      <input value={form?.[k] ?? ''} onChange={(e) => set(k, e.target.value.replace(/\D/g, ''))}
+        placeholder="optional" inputMode="numeric" className={inputCls + ' font-mono'} style={inputStyle} />
+    </div>
+  );
 
   return (
     <div className="fu">
       <div className="rounded-[10px] px-4 py-3 mb-4 text-[12px] leading-relaxed text-stone-600" style={{ background: BLUE_LT, border: `1px solid ${BLUE_MD}` }}>
         Jis ad ke URL mein <b>?c=</b> nahi laga, uska pixel yahan se set karo — ad edit karke review mein bhejne ki zaroorat nahi.
-        Meta har click ke URL mein <b>utm_content</b> (Ad ID), <b>utm_term</b> (Adset ID) aur <b>utm_id</b> (Campaign ID) khud jodta hai.
-        <span className="block mt-1 text-stone-500">Order: URL ka <b>?c=</b> → Ad ID mapping → Adset ID mapping → Campaign ID mapping → campaign ka purana slug → default pixel.</span>
+        Ek mapping mein <b>Ad ID</b>, <b>Adset ID</b> aur <b>Campaign ID</b> teeno daal sakte ho (kam se kam ek).
+        <span className="block mt-1 text-stone-500">
+          Match <b>sabse specific ID</b> se hota hai (Ad → Adset → Campaign, <span className="font-mono text-[11px] px-1 rounded" style={{ background: '#ECFDF5', color: '#047857' }}>hara</span> wala).
+          Baaki IDs batati hain ki ad kis adset / campaign ka hai — URL mein na ho to wahi lead aur payment mein save hongi.
+          Bina mapping: campaign ka purana slug → default pixel.
+        </span>
       </div>
 
       <div className="flex justify-end mb-4">
@@ -1451,21 +1485,16 @@ function AdMappingsPanel() {
       {form && (
         <div className="rounded-[10px] p-5 mb-4" style={{ ...card, background: '#FAF8F4' }}>
           <p className="text-[13px] font-bold text-stone-800 mb-4">{editId ? 'Edit mapping' : 'Add mapping'}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
-            <div>
-              <label className={labelCls}>Type</label>
-              <select value={form.match_type} onChange={(e) => set('match_type', e.target.value as MappingForm['match_type'])}
-                className={inputCls} style={{ ...inputStyle, cursor: 'pointer' }}>
-                <option value="ad">Ad ID (utm_content)</option>
-                <option value="adset">Adset ID (utm_term)</option>
-                <option value="campaign">Campaign ID (utm_id)</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>{form.match_type === 'ad' ? 'Meta Ad ID' : form.match_type === 'adset' ? 'Meta Adset ID' : 'Meta Campaign ID'}</label>
-              <input value={form.meta_id} onChange={(e) => set('meta_id', e.target.value.replace(/\D/g, ''))}
-                placeholder="e.g. 120248366307600144" inputMode="numeric" className={inputCls + ' font-mono'} style={inputStyle} />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-1">
+            {idInput('ad_id', 'Meta Ad ID', 'utm_content')}
+            {idInput('adset_id', 'Meta Adset ID', 'utm_term')}
+            {idInput('campaign_id', 'Meta Campaign ID', 'utm_id')}
+          </div>
+          <p className="text-[11px] mb-3" style={{ color: matchOn ? '#047857' : '#776D62' }}>
+            {matchOn ? <>Match hoga: <b>{matchOn}</b> se</> : 'Kam se kam ek ID daalo'}
+            {form && !idsValid && <span className="text-red-500"> · ID sirf digits (5–30)</span>}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>
               <label className={labelCls}>Pixel (slug)</label>
               <select value={form.slug} onChange={(e) => set('slug', e.target.value)}
@@ -1479,10 +1508,10 @@ function AdMappingsPanel() {
               <input value={form.campaign_name} onChange={(e) => set('campaign_name', e.target.value)}
                 placeholder="payments mein yahi naam save hoga" className={inputCls} style={inputStyle} />
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <label className={labelCls}>Note (optional)</label>
               <input value={form.note} onChange={(e) => set('note', e.target.value)}
-                placeholder="e.g. URL mein c= nahi hai, ad review se bachane ke liye" className={inputCls} style={inputStyle} />
+                placeholder="e.g. URL mein c= nahi hai" className={inputCls} style={inputStyle} />
             </div>
           </div>
           <label className="flex items-center gap-2 text-[12px] text-stone-600 mb-4 cursor-pointer w-fit">
@@ -1508,57 +1537,57 @@ function AdMappingsPanel() {
           <table className="w-full text-left">
             <thead>
               <tr style={{ background: '#FAF8F4', borderBottom: '1px solid #EDE8E0' }}>
-                {['Type', 'Meta ID', 'Pixel', 'Campaign name', 'Note', 'Conversions', 'Status', ''].map((h) => (
+                {['Ad ID', 'Adset ID', 'Campaign ID', 'Pixel', 'Campaign name', 'Note', 'Conversions', 'Status', ''].map((h) => (
                   <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-stone-400 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} className="px-5 py-10 text-center text-[13px] text-stone-400">Loading…</td></tr>
+                <tr><td colSpan={9} className="px-5 py-10 text-center text-[13px] text-stone-400">Loading…</td></tr>
               ) : rows.length === 0 ? (
-                <tr><td colSpan={8} className="px-5 py-10 text-center text-[13px] text-stone-400">Koi mapping nahi — &quot;Add mapping&quot; se banao</td></tr>
-              ) : rows.map((m) => (
-                <tr key={m.id} style={{ borderBottom: '1px solid #F3EFE8', opacity: m.is_active ? 1 : 0.5 }}>
-                  <td className="px-5 py-3.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-                      style={m.match_type === 'ad' ? { background: '#EFF6FF', color: '#1D4ED8' } : m.match_type === 'adset' ? { background: '#ECFDF5', color: '#047857' } : { background: '#F5F3FF', color: '#7C3AED' }}>
-                      {m.match_type === 'ad' ? 'Ad ID' : m.match_type === 'adset' ? 'Adset ID' : 'Campaign ID'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-[11px] font-mono text-stone-700 select-all whitespace-nowrap">{m.meta_id}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-[12px] font-bold text-stone-800">{m.slug}</span>
-                    {m.pixel_label && <span className="block text-[10px] text-stone-400">{m.pixel_label}</span>}
-                  </td>
-                  <td className="px-5 py-3.5 text-[12px] text-stone-600">{m.campaign_name ?? <span className="text-stone-300">—</span>}</td>
-                  <td className="px-5 py-3.5 text-[11px] text-stone-500 max-w-[240px]">{m.note ?? <span className="text-stone-300">—</span>}</td>
-                  <td className="px-5 py-3.5 text-[12px] font-bold text-stone-800">{m.conversions ?? <span className="text-stone-300 font-normal">—</span>}</td>
-                  <td className="px-5 py-3.5">
-                    <button onClick={() => toggle(m)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-                      style={m.is_active ? { background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0' } : { background: '#FAF8F4', color: '#776D62', border: '1px solid #E6E0D6' }}>
-                      {m.is_active ? 'Active' : 'Paused'}
-                    </button>
-                  </td>
-                  <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                    {delConfirm === m.id ? (
-                      <span className="inline-flex items-center gap-2">
-                        <button onClick={() => remove(m.id)} className="text-[11px] font-bold text-red-600">Delete?</button>
-                        <button onClick={() => setDelConfirm(null)} className="text-[11px] font-semibold text-stone-400">Cancel</button>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-3">
-                        <button onClick={() => {
-                          setForm({ match_type: m.match_type, meta_id: m.meta_id, slug: m.slug, campaign_name: m.campaign_name ?? '', note: m.note ?? '', is_active: m.is_active });
-                          setEditId(m.id); setError('');
-                        }} className="text-[11px] font-semibold text-stone-500 hover:text-stone-800">Edit</button>
-                        <button onClick={() => setDelConfirm(m.id)} className="text-[11px] font-semibold text-red-400 hover:text-red-600">Delete</button>
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                <tr><td colSpan={9} className="px-5 py-10 text-center text-[13px] text-stone-400">Koi mapping nahi — &quot;Add mapping&quot; se banao</td></tr>
+              ) : rows.map((m) => {
+                const key = mappingKey(m);
+                return (
+                  <tr key={m.id} style={{ borderBottom: '1px solid #F3EFE8', opacity: m.is_active ? 1 : 0.5 }}>
+                    <td className="px-5 py-3.5"><IdCell id={m.ad_id} active={key === 'ad'} /></td>
+                    <td className="px-5 py-3.5"><IdCell id={m.adset_id} active={key === 'adset'} /></td>
+                    <td className="px-5 py-3.5"><IdCell id={m.campaign_id} active={key === 'campaign'} /></td>
+                    <td className="px-5 py-3.5">
+                      <span className="text-[12px] font-bold text-stone-800">{m.slug}</span>
+                      {m.pixel_label && <span className="block text-[10px] text-stone-400">{m.pixel_label}</span>}
+                    </td>
+                    <td className="px-5 py-3.5 text-[12px] text-stone-600">{m.campaign_name ?? <span className="text-stone-300">—</span>}</td>
+                    <td className="px-5 py-3.5 text-[11px] text-stone-500 max-w-[220px]">{m.note ?? <span className="text-stone-300">—</span>}</td>
+                    <td className="px-5 py-3.5 text-[12px] font-bold text-stone-800">{m.conversions}</td>
+                    <td className="px-5 py-3.5">
+                      <button onClick={() => toggle(m)}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                        style={m.is_active ? { background: '#F0FDF4', color: '#15803D', border: '1px solid #BBF7D0' } : { background: '#FAF8F4', color: '#776D62', border: '1px solid #E6E0D6' }}>
+                        {m.is_active ? 'Active' : 'Paused'}
+                      </button>
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                      {delConfirm === m.id ? (
+                        <span className="inline-flex items-center gap-2">
+                          <button onClick={() => remove(m.id)} className="text-[11px] font-bold text-red-600">Delete?</button>
+                          <button onClick={() => setDelConfirm(null)} className="text-[11px] font-semibold text-stone-400">Cancel</button>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-3">
+                          <button onClick={() => {
+                            setForm({ ad_id: m.ad_id ?? '', adset_id: m.adset_id ?? '', campaign_id: m.campaign_id ?? '', slug: m.slug,
+                              campaign_name: m.campaign_name ?? '', note: m.note ?? '', is_active: m.is_active });
+                            setEditId(m.id); setError('');
+                          }} className="text-[11px] font-semibold text-stone-500 hover:text-stone-800">Edit</button>
+                          <button onClick={() => setDelConfirm(m.id)} className="text-[11px] font-semibold text-red-400 hover:text-red-600">Delete</button>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1579,7 +1608,7 @@ const ADMIN_TITLES: Record<AdminTab, [string, string]> = {
   payments:      ['Payments', 'Har payment — status, campaign aur source ke saath.'],
   subscriptions: ['Subscriptions', 'Kiske paas access hai, kab tak — aur kisi ko bhi free access do.'],
   marketing:     ['Marketing', 'Pixels, attribution aur conversion analytics.'],
-  adMappings:    ['Ad Mapping', 'Bina ?c= wale ads ko Ad ID / Adset ID / Campaign ID se sahi pixel par bhejo.'],
+  adMappings:    ['Ad Mapping', 'Bina ?c= wale ads ko Ad / Adset / Campaign ID se sahi pixel par bhejo.'],
   mediaBuyers:   ['Media Buyers', 'Media buyers jo pixels aur campaigns chalate hain.'],
 };
 

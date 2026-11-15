@@ -93,10 +93,19 @@ export default function CampaignTracker() {
       : `c=${encodeURIComponent(campaignSlug)}`;
     fetch(`/api/pixel-config?${query}`)
       .then((r) => r.json())
-      .then(({ pixelId, slug: resolved, campaignName }: { pixelId: string | null; slug?: string | null; campaignName?: string | null }) => {
-        if (resolveFromAd && resolved) {
-          localStorage.setItem('mr_campaign', resolved);
-          if (campaignName && !metaCampaignName) localStorage.setItem('mr_meta_campaign_name', campaignName);
+      .then((cfg: { pixelId: string | null; slug?: string | null; campaignName?: string | null;
+                    campaignId?: string | null; adsetId?: string | null; adId?: string | null }) => {
+        const { pixelId } = cfg;
+        if (resolveFromAd && cfg.slug) {
+          localStorage.setItem('mr_campaign', cfg.slug);
+          // Ad Mapping knows which adset / campaign the ad belongs to — fill what the URL didn't carry
+          const fill: [string, string | null | undefined, string | null][] = [
+            ['mr_meta_campaign_name', cfg.campaignName, metaCampaignName],
+            ['mr_meta_campaign_id', cfg.campaignId, campId],
+            ['mr_meta_adset_id', cfg.adsetId, adsetId],
+            ['mr_meta_ad_id', cfg.adId, adId],
+          ];
+          for (const [key, val, fromUrl] of fill) if (val && !fromUrl) localStorage.setItem(key, val);
         }
         if (!pixelId) return;
         // Only init once per session — fbq queues events until init, so re-init causes duplicate sends
