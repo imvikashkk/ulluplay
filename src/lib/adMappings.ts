@@ -2,14 +2,16 @@
 
 export interface MappingInput {
   ad_id?: string; adset_id?: string; campaign_id?: string;
-  slug: string; campaign_name?: string; note?: string; is_active?: boolean;
+  slug: string; campaign_name?: string; adset_name?: string; ad_name?: string; note?: string; is_active?: boolean;
 }
 export interface MappingValues {
   ad_id: string | null; adset_id: string | null; campaign_id: string | null;
-  slug: string; campaign_name: string | null; note: string | null; is_active: boolean;
+  slug: string; campaign_name: string | null; adset_name: string | null; ad_name: string | null;
+  note: string | null; is_active: boolean;
 }
 
 const metaId = (v: unknown) => String(v ?? '').replace(/\s/g, '');
+const name = (v: unknown) => String(v ?? '').trim().slice(0, 200) || null;
 
 // Shared validation for POST / PUT
 export function parseMapping(body: Partial<MappingInput>): { ok: true; v: MappingValues } | { ok: false; message: string } {
@@ -24,7 +26,7 @@ export function parseMapping(body: Partial<MappingInput>): { ok: true; v: Mappin
     ok: true,
     v: {
       ad_id: ad_id || null, adset_id: adset_id || null, campaign_id: campaign_id || null, slug,
-      campaign_name: String(body.campaign_name ?? '').trim().slice(0, 200) || null,
+      campaign_name: name(body.campaign_name), adset_name: name(body.adset_name), ad_name: name(body.ad_name),
       note: String(body.note ?? '').trim().slice(0, 500) || null,
       is_active: body.is_active !== false,
     },

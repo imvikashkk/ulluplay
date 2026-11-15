@@ -18,10 +18,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const v = parsed.v;
     const res = await pool.query(
       `UPDATE ad_slug_mappings
-          SET ad_id = $1, adset_id = $2, campaign_id = $3, slug = $4, campaign_name = $5, note = $6,
-              is_active = $7, updated_at = NOW()
-        WHERE id = $8`,
-      [v.ad_id, v.adset_id, v.campaign_id, v.slug, v.campaign_name, v.note, v.is_active, id],
+          SET ad_id = $1, adset_id = $2, campaign_id = $3, slug = $4, campaign_name = $5, adset_name = $6,
+              ad_name = $7, note = $8, is_active = $9, updated_at = NOW()
+        WHERE id = $10`,
+      [v.ad_id, v.adset_id, v.campaign_id, v.slug, v.campaign_name, v.adset_name, v.ad_name, v.note, v.is_active, id],
     );
     if (res.rowCount === 0) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
     return NextResponse.json({ success: true });

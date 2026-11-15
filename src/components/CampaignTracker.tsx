@@ -93,7 +93,7 @@ export default function CampaignTracker() {
       : `c=${encodeURIComponent(campaignSlug)}`;
     fetch(`/api/pixel-config?${query}`)
       .then((r) => r.json())
-      .then((cfg: { pixelId: string | null; slug?: string | null; campaignName?: string | null;
+      .then((cfg: { pixelId: string | null; slug?: string | null; campaignName?: string | null; adsetName?: string | null; adName?: string | null;
                     campaignId?: string | null; adsetId?: string | null; adId?: string | null }) => {
         const { pixelId } = cfg;
         if (resolveFromAd && cfg.slug) {
@@ -104,6 +104,8 @@ export default function CampaignTracker() {
             ['mr_meta_campaign_id', cfg.campaignId, campId],
             ['mr_meta_adset_id', cfg.adsetId, adsetId],
             ['mr_meta_ad_id', cfg.adId, adId],
+            ['mr_meta_adset_name', cfg.adsetName, ids.meta_adset_name],
+            ['mr_meta_ad_name', cfg.adName, ids.meta_ad_name],
           ];
           for (const [key, val, fromUrl] of fill) if (val && !fromUrl) localStorage.setItem(key, val);
         }

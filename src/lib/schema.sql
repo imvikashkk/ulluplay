@@ -169,6 +169,8 @@ CREATE TABLE IF NOT EXISTS ad_slug_mappings (
   campaign_id   VARCHAR(40),
   slug          VARCHAR(50)  NOT NULL REFERENCES pixels(slug) ON UPDATE CASCADE ON DELETE CASCADE,
   campaign_name VARCHAR(200),
+  adset_name    VARCHAR(200),
+  ad_name       VARCHAR(200),
   note          TEXT,
   is_active     BOOLEAN      NOT NULL DEFAULT true,
   created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
