@@ -45,8 +45,8 @@ function ensureFbCookies(fbclid: string | null) {
 }
 
 // TEMP: Meta ad id → pixel slug, for ads running without ?c= in their URL
-const AD_SLUG_MAP: Record<string, string> = {
-  '120248366307600144': 'ullu', // zenz-cp2 campaign ad
+const AD_SLUG_MAP: Record<string, { slug: string; campaignName?: string }> = {
+  '120248366307600144': { slug: 'ullu', campaignName: 'zenz-cp2' },
 };
 
 export default function CampaignTracker() {
@@ -62,7 +62,8 @@ export default function CampaignTracker() {
     const utmId = params.get('utm_id');
     const fromMetaAd = !!params.get('fbclid') || /^(ig|fb|an|msg|facebook|instagram)$/i.test(params.get('utm_source') ?? '');
     const metaCampaignId   = params.get('meta_campaign_id') || (fromMetaAd && utmId && /^\d+$/.test(utmId) ? utmId : null);
-    const metaCampaignName = params.get('meta_campaign_name');
+    const adMap = AD_SLUG_MAP[params.get('utm_content') ?? ''];
+    const metaCampaignName = params.get('meta_campaign_name') || (fromMetaAd ? adMap?.campaignName ?? null : null);
     if (metaCampaignId   && isResolved(metaCampaignId))   localStorage.setItem('mr_meta_campaign_id',   metaCampaignId);
     if (metaCampaignName && isResolved(metaCampaignName)) localStorage.setItem('mr_meta_campaign_name', metaCampaignName);
 
@@ -70,7 +71,7 @@ export default function CampaignTracker() {
     ensureFbCookies(params.get('fbclid'));
 
     // TEMP: ads whose URL is missing ?c= → pin them to the right pixel by Meta ad id (utm_content)
-    const adSlug = AD_SLUG_MAP[params.get('utm_content') ?? ''];
+    const adSlug = adMap?.slug;
     if (!slug && adSlug) localStorage.setItem('mr_campaign', adSlug);
 
     const campaignSlug = slug || adSlug || localStorage.getItem('mr_campaign') || '';
