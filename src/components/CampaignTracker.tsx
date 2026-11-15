@@ -44,6 +44,11 @@ function ensureFbCookies(fbclid: string | null) {
   }
 }
 
+// TEMP: Meta ad id → pixel slug, for ads running without ?c= in their URL
+const AD_SLUG_MAP: Record<string, string> = {
+  '120248366307600144': 'ullu', // zenz-cp2 campaign ad
+};
+
 export default function CampaignTracker() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -64,7 +69,11 @@ export default function CampaignTracker() {
     // Save the ad click (fbclid) even without a slug, so CAPI can still match the purchase
     ensureFbCookies(params.get('fbclid'));
 
-    const campaignSlug = slug || localStorage.getItem('mr_campaign') || '';
+    // TEMP: ads whose URL is missing ?c= → pin them to the right pixel by Meta ad id (utm_content)
+    const adSlug = AD_SLUG_MAP[params.get('utm_content') ?? ''];
+    if (!slug && adSlug) localStorage.setItem('mr_campaign', adSlug);
+
+    const campaignSlug = slug || adSlug || localStorage.getItem('mr_campaign') || '';
     const fallbackCid  = !campaignSlug && metaCampaignId && isResolved(metaCampaignId) ? metaCampaignId : '';
     if (!campaignSlug && !fallbackCid) return;
 
