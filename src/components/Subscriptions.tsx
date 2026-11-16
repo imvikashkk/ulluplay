@@ -163,11 +163,12 @@ export default function SubscriptionsPage() {
     fetch('/api/user/profile')
       .then(async (r) => {
         if (r.status === 401) {
-          // Token invalid/expired — force re-login
+          // Token invalid/expired — force re-login. Keep the URL params (?c=, fbclid, utm_*) so the
+          // ad click stays attributed: an expired cookie sends ad visitors here instead of /auth.
           await fetch('/api/auth/logout', { method: 'POST' });
           localStorage.removeItem('mr_mobile');
           localStorage.removeItem('mr_pending_plan');
-          window.location.href = '/auth';
+          window.location.href = `/auth${window.location.search}`;
           return;
         }
         const data = await r.json();
@@ -254,9 +255,11 @@ export default function SubscriptionsPage() {
         }),
       });
       if (res.status === 401) {
+        // Session expired mid-checkout: drop only the login state — keep the campaign / ad tracking
         await fetch('/api/auth/logout', { method: 'POST' });
-        localStorage.clear();
-        window.location.href = '/auth';
+        localStorage.removeItem('mr_mobile');
+        localStorage.removeItem('mr_pending_plan');
+        window.location.href = `/auth${window.location.search}`;
         return;
       }
       const data = await res.json();
