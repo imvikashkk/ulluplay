@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Anton, Geist, Geist_Mono, Mukta, Poppins } from 'next/font/google';
 import CampaignTracker from '@/components/CampaignTracker';
 import { isTestEnv } from '@/lib/appEnv';
+import { activeGateway, GATEWAY_LABEL } from '@/lib/gateway';
 import './globals.css';
 
 const geistSans = Geist({
@@ -54,7 +55,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {isTestEnv && (
           <div className="sticky top-0 z-[9999] bg-amber-400 py-1 text-center text-xs font-bold text-black">
-            TEST MODE: payments go to the SabPaisa sandbox, no real money is charged
+            TEST MODE: payments go to the {GATEWAY_LABEL[activeGateway()]} sandbox, no real money is charged
           </div>
         )}
         {children}

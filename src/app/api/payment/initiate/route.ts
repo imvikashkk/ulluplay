@@ -3,6 +3,9 @@ import pool from '@/lib/db';
 import { attributionVia, mappingIdOf } from '@/lib/attribution';
 import { verifyUserToken } from '@/lib/userAuth';
 import { createSabpaisaOrder } from '@/lib/sabpaisa';
+import { createPayuOrder } from '@/lib/payu';
+import { createPaytmOrder } from '@/lib/paytm';
+import { activeGateway } from '@/lib/gateway';
 import { APP_ENV } from '@/lib/appEnv';
 
 export async function POST(req: NextRequest) {
@@ -85,7 +88,11 @@ export async function POST(req: NextRequest) {
     }
 
     const customer = { userId: Number(userId), mobile: user.mobile ?? '' };
-    const order = await createSabpaisaOrder(Number(plan.price), customer);
+    const gateway = activeGateway();
+    const order =
+      gateway === 'payu' ? await createPayuOrder(Number(plan.price), customer)
+      : gateway === 'paytm' ? await createPaytmOrder(Number(plan.price), customer)
+      : await createSabpaisaOrder(Number(plan.price), customer);
 
     if ('error' in order) {
       return NextResponse.json(
@@ -112,7 +119,7 @@ export async function POST(req: NextRequest) {
         fbc,
         metaCampaignId,
         metaCampaignName,
-        JSON.stringify({ expiresAt: order.expiresAt, gateway: 'sabpaisa', env: APP_ENV }),
+        JSON.stringify({ expiresAt: order.expiresAt, gateway, env: APP_ENV, ...('txnToken' in order ? { txnToken: order.txnToken } : {}) }),
         req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
         req.headers.get('user-agent') || null,
         metaAdsetId,
@@ -124,7 +131,7 @@ export async function POST(req: NextRequest) {
       ],
     );
 
-    // The browser is redirected to SabPaisa's checkout
+    // The browser is redirected to the gateway's checkout (SabPaisa URL, or our PayU / Paytm form-post page)
     return NextResponse.json({
       success: true,
       data: { txnId, amount: plan.price, redirectUrl: order.redirectUrl },

@@ -2,6 +2,8 @@
 // test       → SabPaisa staging, "TEST MODE" banner, noindex, relaxed checks
 // production → SabPaisa live, strict config checks on boot
 // Falls back to the old SABPAISA_ENV=staging flag so existing .env files keep working.
+import { activeGateway, GATEWAYS, type Gateway } from './gateway';
+
 export type AppEnv = 'test' | 'production';
 
 export const APP_ENV: AppEnv =
@@ -17,13 +19,25 @@ const REQUIRED = [
   'NEXT_PUBLIC_APP_URL',
   'USER_TOKEN_SECRET', 'ADMIN_TOKEN_SECRET', 'MB_AUTH_SECRET',
   'ADMIN_USER', 'ADMIN_PASSWORD',
-  'SABPAISA_CLIENT_CODE', 'SABPAISA_API_KEY', 'SABPAISA_SECRET_KEY',
   'MERAOTP_API_KEY',
 ];
 
+// Keys of the gateway new orders go to (PAYMENT_GATEWAY)
+const GATEWAY_REQUIRED: Record<Gateway, string[]> = {
+  sabpaisa: ['SABPAISA_CLIENT_CODE', 'SABPAISA_API_KEY', 'SABPAISA_SECRET_KEY'],
+  payu: ['PAYU_KEY', 'PAYU_SALT'],
+  paytm: ['PAYTM_MID', 'PAYTM_MERCHANT_KEY'],
+};
+
 // Returns problems with the current config — production refuses to boot on any of them
 export function checkAppConfig(): string[] {
-  const problems = REQUIRED.filter((k) => !process.env[k]).map((k) => `${k} is not set`);
+  const problems = [...REQUIRED, ...GATEWAY_REQUIRED[activeGateway()]]
+    .filter((k) => !process.env[k])
+    .map((k) => `${k} is not set`);
+  const gw = (process.env.PAYMENT_GATEWAY ?? '').trim().toLowerCase();
+  if (gw && !(GATEWAYS as readonly string[]).includes(gw)) {
+    problems.push(`PAYMENT_GATEWAY=${gw} is not one of: ${GATEWAYS.join(', ')}`);
+  }
 
   if (isProdEnv) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';

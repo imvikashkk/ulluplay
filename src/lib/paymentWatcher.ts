@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import pool from './db';
 import { activateSubscription } from './activateSubscription';
 import { getSabpaisaOrderStatus } from './sabpaisa';
+import { getPayuOrderStatus } from './payu';
+import { getPaytmOrderStatus } from './paytm';
+import { gatewayOf } from './gateway';
 
 // Runs on the server, so a payment is activated even if the user closed the page or locked the phone
 const INTERVAL_MS = 5000;
@@ -28,8 +31,13 @@ export async function settleOrder(
   expectedAmount: number,
   req: NextRequest | null,
 ): Promise<SettleResult> {
-  const gateway = 'sabpaisa';
-  const check = await getSabpaisaOrderStatus(txnId);
+  // Each order is checked with the gateway it was created on — PAYMENT_GATEWAY only picks it for new orders
+  const gwRes = await pool.query(`SELECT gateway_response->>'gateway' AS gateway FROM payments WHERE txn_id = $1`, [txnId]);
+  const gateway = gatewayOf(gwRes.rows[0]?.gateway);
+  const check =
+    gateway === 'payu' ? await getPayuOrderStatus(txnId)
+    : gateway === 'paytm' ? await getPaytmOrderStatus(txnId)
+    : await getSabpaisaOrderStatus(txnId);
   if (!check) return { state: 'pending' };
 
   if (check.failed) {
